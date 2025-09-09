@@ -4,17 +4,18 @@ import { useEffect, useRef } from "react";
 import "ol/ol.css";
 import Map from "ol/Map";
 import View from "ol/View";
-import GeoJSON from "ol/format/GeoJSON";
-import { Tile as TileLayer, Vector as VectorLayer } from "ol/layer";
-import { OSM } from "ol/source";
-import KML from "ol/format/KML";
-import VectorSource from "ol/source/Vector";
 import { Style, Fill, Stroke } from "ol/style";
 import { fromLonLat } from "ol/proj";
 import { useMapStore } from "@/store/mapStore";
 import { Select } from "ol/interaction";
 import { click } from "ol/events/condition";
 import CircleStyle from "ol/style/Circle";
+import {
+  areasDeActividadAgropecuariaLayer,
+  argentina_division_politicaLayer,
+  baseLayer,
+  uniUaderLayer,
+} from "@/lib/const/layers";
 
 export default function Mapa() {
   const mapRef = useRef<HTMLDivElement | null>(null);
@@ -26,56 +27,18 @@ export default function Mapa() {
   useEffect(() => {
     if (!mapRef.current) return;
 
-    // Capa base OSM
-    const baseLayer = new TileLayer({
-      source: new OSM(),
-    });
-
-    // Cargar GeoJSON de secciones
-    const vectorSource = new VectorSource({
-      url: "/Provinciasproductorasdearroz_3.geojson",
-      format: new GeoJSON(),
-    });
-
-    const vectorLayer = new VectorLayer({
-      source: vectorSource,
-      style: new Style({
-        fill: new Fill({ color: "rgba(100, 149, 237, 0.4)" }),
-        stroke: new Stroke({ color: "#333", width: 1 }),
-      }),
-    });
-
-    // Crear capa desde archivo KML
-    const kmlLayer = new VectorLayer({
-      source: new VectorSource({
-        url: "/area_protegida.kml", // ruta al archivo en /public
-        format: new KML(),
-      }),
-      visible: true,
-      opacity: 0.8,
-    });
-
-    const areasDeActividadAgropecuariaLayer = new VectorLayer({
-      source: new VectorSource({
-        url: "/areas_de_actividad_agropecuaria_AL270.kml", // ruta al archivo en /public
-        format: new KML(),
-      }),
-      visible: true,
-      opacity: 0.8,
-    });
-
     // Crear mapa
     const map = new Map({
       target: mapRef.current,
       layers: [
         baseLayer,
-        vectorLayer,
-        kmlLayer,
+        uniUaderLayer,
         areasDeActividadAgropecuariaLayer,
+        argentina_division_politicaLayer,
       ],
       view: new View({
-        center: fromLonLat([-63.5, -35]),
-        zoom: 6,
+        center: fromLonLat([-59, -32]),
+        zoom: 7,
       }),
     });
 
@@ -90,18 +53,11 @@ export default function Mapa() {
         layer: baseLayer,
       },
       {
-        id: "regiones",
-        title: "Regiones",
+        id: "uni_uader",
+        title: "Ubicación Unidades Académicas UADER",
         visible: true,
-        opacity: 0.8,
-        layer: vectorLayer,
-      },
-      {
-        id: "area_protegida",
-        title: "Área Protegida (KML)",
-        visible: true,
-        opacity: 0.8,
-        layer: kmlLayer,
+        opacity: 1,
+        layer: uniUaderLayer,
       },
       {
         id: "areas_de_actividad_agropecuaria",
@@ -109,6 +65,13 @@ export default function Mapa() {
         visible: true,
         opacity: 0.8,
         layer: areasDeActividadAgropecuariaLayer,
+      },
+      {
+        id: "argentina_division_politicaLayer",
+        title: "Division politica Argentina",
+        visible: true,
+        opacity: 0.8,
+        layer: argentina_division_politicaLayer,
       },
     ]);
 

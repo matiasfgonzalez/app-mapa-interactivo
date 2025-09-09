@@ -1,0 +1,374 @@
+{
+  "type": "FeatureCollection",
+  "name": "uni_uader",
+  "crs": {
+    "type": "name",
+    "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "cua": 3351,
+        "coord_x": -60.522,
+        "coord_y": -31.834,
+        "sede": "FCYT",
+        "sede_nomb": "Facultad de Ciencia y Tecnología. Sede Oro Verde"
+      },
+      "geometry": { "type": "Point", "coordinates": [-60.521919, -31.83415] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "cua": 3346,
+        "coord_x": -60.635,
+        "coord_y": -32.068,
+        "sede": "FCYT",
+        "sede_nomb": "Facultad de Ciencia y Tecnología. Sede Diamante"
+      },
+      "geometry": { "type": "Point", "coordinates": [-60.6353104, -32.0675412] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "cua": 3359,
+        "coord_x": -60.526,
+        "coord_y": -31.733,
+        "sede": "FHAYCS",
+        "sede_nomb": "Facultad de Humanidades, Artes y Ciencias Sociales. Sede Paraná"
+      },
+      "geometry": { "type": "Point", "coordinates": [-60.5262794, -31.7334041] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "cua": 3340,
+        "coord_x": -60.532,
+        "coord_y": -31.736,
+        "sede": "FCVS",
+        "sede_nomb": "Facultad de Ciencias de la Vida y la Salud. Sede Paraná"
+      },
+      "geometry": { "type": "Point", "coordinates": [-60.5323588, -31.7362902] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "cua": 3354,
+        "coord_x": -58.233,
+        "coord_y": -32.479,
+        "sede": "FCYT",
+        "sede_nomb": "Facultad de Ciencia y Tecnología. Sede Uruguay"
+      },
+      "geometry": { "type": "Point", "coordinates": [-58.2333326, -32.479067] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "cua": 3336,
+        "coord_x": -58.234,
+        "coord_y": -32.485,
+        "sede": "FCG",
+        "sede_nomb": "Facultad de Ciencias de la Gestión. Sede Uruguay"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-58.23378942, -32.48463802]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "cua": 3360,
+        "coord_x": -58.229,
+        "coord_y": -32.485,
+        "sede": "FHAYCS",
+        "sede_nomb": "Facultad de Humanidades, Artes y Ciencias Sociales. Sede Uruguay"
+      },
+      "geometry": { "type": "Point", "coordinates": [-58.2287357, -32.4846766] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "cua": 3355,
+        "coord_x": -58.99,
+        "coord_y": -31.891,
+        "sede": "FCYT",
+        "sede_nomb": "Facultad de Ciencia y Tecnología. Sede Villaguay"
+      },
+      "geometry": { "type": "Point", "coordinates": [-58.9895097, -31.891258] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "cua": 3335,
+        "coord_x": -60.533,
+        "coord_y": -31.731,
+        "sede": "FCG",
+        "sede_nomb": "Facultad de Ciencias de la Gestión. Sede Paraná"
+      },
+      "geometry": { "type": "Point", "coordinates": [-60.5330918, -31.7311191] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "cua": 3343,
+        "coord_x": -58.878,
+        "coord_y": -32.369,
+        "sede": "FCYT",
+        "sede_nomb": "Facultad de Ciencia y Tecnología. Sede Basavilbaso"
+      },
+      "geometry": { "type": "Point", "coordinates": [-58.8776528, -32.3686332] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "cua": 3344,
+        "coord_x": -57.977,
+        "coord_y": -30.737,
+        "sede": "FCYT",
+        "sede_nomb": "Facultad de Ciencia y Tecnología. Sede Chajarí"
+      },
+      "geometry": { "type": "Point", "coordinates": [-57.9770908, -30.7365492] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "cua": 3329,
+        "coord_x": -57.977,
+        "coord_y": -30.737,
+        "sede": "FCG",
+        "sede_nomb": "Facultad de Ciencias de la Gestión. Sede Chajarí"
+      },
+      "geometry": { "type": "Point", "coordinates": [-57.9770908, -30.7365492] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "cua": 3345,
+        "coord_x": -60.306,
+        "coord_y": -32.035,
+        "sede": "FCYT",
+        "sede_nomb": "Facultad de Ciencia y Tecnología. Sede Crespo"
+      },
+      "geometry": { "type": "Point", "coordinates": [-60.3062931, -32.0347853] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "cua": 3347,
+        "coord_x": -57.923,
+        "coord_y": -30.981,
+        "sede": "FCYT",
+        "sede_nomb": "Facultad de Ciencia y Tecnología. Sede Federación"
+      },
+      "geometry": { "type": "Point", "coordinates": [-57.9229148, -30.9807731] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "cua": 3357,
+        "coord_x": -57.923,
+        "coord_y": -30.981,
+        "sede": "FHAYCS",
+        "sede_nomb": "Facultad de Humanidades, Artes y Ciencias Sociales. Sede Federación"
+      },
+      "geometry": { "type": "Point", "coordinates": [-57.9230435, -30.9808283] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "cua": 3349,
+        "coord_x": -58.46,
+        "coord_y": -33.015,
+        "sede": "FCYT",
+        "sede_nomb": "Facultad de Ciencia y Tecnología. Sede Gualeguaychú"
+      },
+      "geometry": { "type": "Point", "coordinates": [-58.460044, -33.0150051] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "cua": 3353,
+        "coord_x": -59.796,
+        "coord_y": -30.954,
+        "sede": "FCYT",
+        "sede_nomb": "Facultad de Ciencia y Tecnología. Sede Santa Elena"
+      },
+      "geometry": { "type": "Point", "coordinates": [-59.7964706, -30.953534] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "cua": 3348,
+        "coord_x": -59.308,
+        "coord_y": -33.149,
+        "sede": "FCYT",
+        "sede_nomb": "Facultad de Ciencia y Tecnología. Sede Gualeguay"
+      },
+      "geometry": { "type": "Point", "coordinates": [-59.3084523, -33.1492023] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "cua": 3350,
+        "coord_x": -59.794,
+        "coord_y": -32.393,
+        "sede": "FCYT",
+        "sede_nomb": "Facultad de Ciencia y Tecnología. Sede Nogoyá"
+      },
+      "geometry": { "type": "Point", "coordinates": [-59.793595, -32.3933077] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "cua": 3356,
+        "coord_x": -58.023,
+        "coord_y": -31.406,
+        "sede": "FHAYCS",
+        "sede_nomb": "Facultad de Humanidades, Artes y Ciencias Sociales. Sede Concordia"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-58.02326304, -31.40637061]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "cua": 3356,
+        "coord_x": -58.015,
+        "coord_y": -31.386,
+        "sede": "FHAYCS",
+        "sede_nomb": "Facultad de Humanidades, Artes y Ciencias Sociales. Sede Concordia"
+      },
+      "geometry": { "type": "Point", "coordinates": [-58.0151278, -31.3855591] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "cua": 3331,
+        "coord_x": -57.923,
+        "coord_y": -30.981,
+        "sede": "FCG",
+        "sede_nomb": "Facultad de Ciencias de la Gestión. Sede Federación"
+      },
+      "geometry": { "type": "Point", "coordinates": [-57.9229577, -30.9808099] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "cua": 3330,
+        "coord_x": -60.312,
+        "coord_y": -32.035,
+        "sede": "FCG",
+        "sede_nomb": "Facultad de Ciencias de la Gestión. Sede Crespo"
+      },
+      "geometry": { "type": "Point", "coordinates": [-60.3122215, -32.0346271] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "cua": 3334,
+        "coord_x": -59.645,
+        "coord_y": -30.739,
+        "sede": "FCG",
+        "sede_nomb": "Facultad de Ciencias de la Gestión. Sede La Paz"
+      },
+      "geometry": { "type": "Point", "coordinates": [-59.6446812, -30.7390522] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "cua": 3333,
+        "coord_x": -58.512,
+        "coord_y": -33.008,
+        "sede": "FCG",
+        "sede_nomb": "Facultad de Ciencias de la Gestión. Sede Gualeguaychú"
+      },
+      "geometry": { "type": "Point", "coordinates": [-58.5124007, -33.0077875] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "cua": 3337,
+        "coord_x": -59.032,
+        "coord_y": -31.867,
+        "sede": "FCG",
+        "sede_nomb": "Facultad de Ciencias de la Gestión. Sede Villaguay"
+      },
+      "geometry": { "type": "Point", "coordinates": [-59.0315125, -31.8671113] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "cua": 3338,
+        "coord_x": -58.018,
+        "coord_y": -31.4,
+        "sede": "FCVS",
+        "sede_nomb": "Facultad de Ciencias de la Vida y la Salud. Sede Concordia"
+      },
+      "geometry": { "type": "Point", "coordinates": [-58.0184766, -31.399899] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "cua": 3341,
+        "coord_x": -60.196,
+        "coord_y": -32.173,
+        "sede": "FCVS",
+        "sede_nomb": "Facultad de Ciencias de la Vida y la Salud. Sede Ramírez"
+      },
+      "geometry": { "type": "Point", "coordinates": [-60.1956332, -32.1731847] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "cua": 3342,
+        "coord_x": -59.031,
+        "coord_y": -31.867,
+        "sede": "FCVS",
+        "sede_nomb": "Facultad de Ciencias de la Vida y la Salud. Sede Villaguay"
+      },
+      "geometry": { "type": "Point", "coordinates": [-59.0314052, -31.867166] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "cua": 3339,
+        "coord_x": -59.308,
+        "coord_y": -33.149,
+        "sede": "FCVS",
+        "sede_nomb": "Facultad de Ciencias de la Vida y la Salud. Sede Gualeguay"
+      },
+      "geometry": { "type": "Point", "coordinates": [-59.3082298, -33.1493823] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "cua": 3332,
+        "coord_x": -58.779,
+        "coord_y": -30.955,
+        "sede": "FCG",
+        "sede_nomb": "Facultad de Ciencias de la Gestión. Sede Federal"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-58.77932255, -30.95485492]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "cua": 2345,
+        "coord_x": -60.533,
+        "coord_y": -31.731,
+        "sede": "FCG",
+        "sede_nomb": "Facultad de Ciencias de la Gestión"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-60.53323457, -31.7310723]
+      }
+    }
+  ]
+}

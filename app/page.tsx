@@ -19,6 +19,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { useMapStore } from "@/store/mapStore";
+import DnDList from "@/components/DnDList";
 
 export default function HomePage() {
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(false); // Cerrado por defecto en mobile
@@ -232,6 +233,7 @@ export default function HomePage() {
                   <h3 className="font-medium text-gray-900 text-sm sm:text-base">
                     Capas Disponibles
                   </h3>
+                  <DnDList />
                   {/* Layers Section */}
                   <div className="flex-1 p-1 overflow-y-auto">
                     {activeSection === "layers" && (

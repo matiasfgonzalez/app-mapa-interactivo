@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-interface LayerData {
+export interface LayerData {
   id: string;
   title: string;
   visible: boolean;
