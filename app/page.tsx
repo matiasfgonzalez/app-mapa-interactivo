@@ -18,8 +18,9 @@ import {
   Globe,
   ChevronUp,
 } from "lucide-react";
-import { useMapStore } from "@/store/mapStore";
-import DnDList from "@/components/DnDList";
+import { LayerData, useMapStore } from "@/store/mapStore";
+import { getWFSCapabilities } from "@/lib/resources/getWFSCapabilities";
+import ModalComponent from "@/components/ModalComponent";
 
 export default function HomePage() {
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(false); // Cerrado por defecto en mobile
@@ -29,11 +30,15 @@ export default function HomePage() {
   const [mobileBottomPanelOpen, setMobileBottomPanelOpen] = useState(false);
 
   // Zustand
+  const map = useMapStore((s) => s.map); // referencia al ma
   const layers = useMapStore((s) => s.layers);
+  const setLayers = useMapStore((s) => s.setLayers);
   const toggleLayer = useMapStore((s) => s.toggleLayer);
   const setOpacity = useMapStore((s) => s.setOpacity);
   const selectedRegion = useMapStore((s) => s.selectedRegion);
   const featureValues = useMapStore((s) => s.featureValues);
+  const lon = useMapStore((s) => s.lon); // referencia al ma
+  const lat = useMapStore((s) => s.lat); // referencia al ma
 
   // Detectar si es dispositivo móvil
   useEffect(() => {
@@ -81,6 +86,26 @@ export default function HomePage() {
         { partido: "La Libertad Avanza", porcentaje: 50.0 },
       ],
     },
+  };
+
+  function reorderLayers(newLayers: LayerData[]) {
+    // Actualizo store
+    setLayers(newLayers);
+
+    if (!map) return;
+
+    // Limpiar todas las capas del map
+    map.getLayers().clear();
+
+    // Agregar las capas en el nuevo orden
+    newLayers.forEach((l) => {
+      map.addLayer(l.layer);
+    });
+  }
+
+  const obtenerCapasWFS = async () => {
+    const resp = await getWFSCapabilities();
+    console.log(resp);
   };
 
   return (
@@ -233,15 +258,18 @@ export default function HomePage() {
                   <h3 className="font-medium text-gray-900 text-sm sm:text-base">
                     Capas Disponibles
                   </h3>
-                  <DnDList />
+                  <button onClick={obtenerCapasWFS}>
+                    Obtener listado de capas wfs
+                  </button>
+                  <ModalComponent />
                   {/* Layers Section */}
                   <div className="flex-1 p-1 overflow-y-auto">
                     {activeSection === "layers" && (
                       <div className="space-y-4">
-                        {layers.map((layer) => (
+                        {layers.map((layer, index) => (
                           <div
                             key={layer.id}
-                            className="p-3 bg-gray-50 rounded-lg"
+                            className="p-3 bg-gray-50 rounded-lg border"
                           >
                             <div className="flex items-center justify-between mb-2">
                               <label className="flex items-center space-x-2">
@@ -258,7 +286,8 @@ export default function HomePage() {
                                 </span>
                               </label>
                             </div>
-                            <div className="flex items-center space-x-2">
+
+                            <div className="flex items-center space-x-2 mb-2">
                               <span className="text-xs text-gray-500">
                                 Opacidad:
                               </span>
@@ -279,6 +308,38 @@ export default function HomePage() {
                               <span className="text-xs text-gray-500 w-10">
                                 {Math.round(layer.opacity * 100)}%
                               </span>
+                            </div>
+
+                            {/* Flechas para mover capas */}
+                            <div className="flex justify-end space-x-1">
+                              <button
+                                onClick={() => {
+                                  if (index === 0) return; // no mover si ya es la primera
+                                  const newLayers = [...layers];
+                                  [newLayers[index - 1], newLayers[index]] = [
+                                    newLayers[index],
+                                    newLayers[index - 1],
+                                  ];
+                                  reorderLayers(newLayers);
+                                }}
+                                className="p-1 bg-gray-200 rounded hover:bg-gray-300"
+                              >
+                                ▲
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (index === layers.length - 1) return; // no mover si ya es la última
+                                  const newLayers = [...layers];
+                                  [newLayers[index], newLayers[index + 1]] = [
+                                    newLayers[index + 1],
+                                    newLayers[index],
+                                  ];
+                                  reorderLayers(newLayers);
+                                }}
+                                className="p-1 bg-gray-200 rounded hover:bg-gray-300"
+                              >
+                                ▼
+                              </button>
                             </div>
                           </div>
                         ))}
@@ -503,7 +564,7 @@ export default function HomePage() {
           </div>
           <div className="flex items-center space-x-2 sm:space-x-4">
             <span className="hidden md:block">
-              Coordenadas: -34.6118, -58.3960
+              Coordenadas: {lon}, {lat}
             </span>
             <span className="flex items-center space-x-1">
               <div className="w-2 h-2 bg-green-400 rounded-full"></div>

@@ -23,6 +23,7 @@ interface DnDListProps {
 
 export default function DnDList(props: Readonly<DnDListProps>) {
   const { layers } = props;
+
   const [items, setItems] = useState(layers);
 
   const sensors = useSensors(useSensor(PointerSensor));
@@ -30,8 +31,8 @@ export default function DnDList(props: Readonly<DnDListProps>) {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
-      const oldIndex = items.indexOf(active.id.toString());
-      const newIndex = items.indexOf(over.id.toString());
+      const oldIndex = items.findIndex((item) => item.id === active.id);
+      const newIndex = items.findIndex((item) => item.id === over.id);
       setItems(arrayMove(items, oldIndex, newIndex));
     }
   };
@@ -45,7 +46,7 @@ export default function DnDList(props: Readonly<DnDListProps>) {
       <SortableContext items={items} strategy={verticalListSortingStrategy}>
         <div className="max-w-sm mx-auto mt-10">
           {items.map((l) => (
-            <SortableItem key={l.id} id={l.id} />
+            <SortableItem key={l.id} id={l.id} layer={l} />
           ))}
         </div>
       </SortableContext>

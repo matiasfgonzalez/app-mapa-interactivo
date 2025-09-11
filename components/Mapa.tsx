@@ -5,7 +5,7 @@ import "ol/ol.css";
 import Map from "ol/Map";
 import View from "ol/View";
 import { Style, Fill, Stroke } from "ol/style";
-import { fromLonLat } from "ol/proj";
+import { fromLonLat, toLonLat } from "ol/proj";
 import { useMapStore } from "@/store/mapStore";
 import { Select } from "ol/interaction";
 import { click } from "ol/events/condition";
@@ -24,6 +24,8 @@ export default function Mapa() {
   const setSelectedRegion = useMapStore((s) => s.setSelectedRegion);
   const setFeatureValues = useMapStore((s) => s.setFeatureValues);
 
+  const setCoordinate = useMapStore((s) => s.setCoordinate);
+
   useEffect(() => {
     if (!mapRef.current) return;
 
@@ -32,9 +34,9 @@ export default function Mapa() {
       target: mapRef.current,
       layers: [
         baseLayer,
+        argentina_division_politicaLayer,
         uniUaderLayer,
         areasDeActividadAgropecuariaLayer,
-        argentina_division_politicaLayer,
       ],
       view: new View({
         center: fromLonLat([-59, -32]),
@@ -53,6 +55,13 @@ export default function Mapa() {
         layer: baseLayer,
       },
       {
+        id: "argentina_division_politicaLayer",
+        title: "Division politica Argentina",
+        visible: true,
+        opacity: 0.8,
+        layer: argentina_division_politicaLayer,
+      },
+      {
         id: "uni_uader",
         title: "Ubicación Unidades Académicas UADER",
         visible: true,
@@ -65,13 +74,6 @@ export default function Mapa() {
         visible: true,
         opacity: 0.8,
         layer: areasDeActividadAgropecuariaLayer,
-      },
-      {
-        id: "argentina_division_politicaLayer",
-        title: "Division politica Argentina",
-        visible: true,
-        opacity: 0.8,
-        layer: argentina_division_politicaLayer,
       },
     ]);
 
@@ -175,6 +177,11 @@ export default function Mapa() {
         }
         setFeatureValues(values);
       }
+    });
+
+    map.on("pointermove", (evt) => {
+      const [lon, lat] = toLonLat(evt.coordinate);
+      setCoordinate(lon, lat);
     });
 
     return () => map.setTarget(undefined);

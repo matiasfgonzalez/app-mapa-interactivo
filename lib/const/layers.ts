@@ -54,15 +54,6 @@ async function loadKmzLayer(url: string) {
   });
 }
 
-// Ejemplo de uso
-const source = await loadKmzLayer("/argentina_division_politica.kmz");
-
-export const argentinaDivisionPoliticaLayer = new VectorLayer({
-  source: source,
-  visible: true,
-  opacity: 0.8,
-});
-
 // Capa del catalogo - argentina_division_politica
 const argentina_division_politica = new VectorSource({
   url: "/catalogo/argentina_division_politica.geojson",
@@ -72,4 +63,20 @@ const argentina_division_politica = new VectorSource({
 export const argentina_division_politicaLayer = new VectorLayer({
   source: argentina_division_politica,
   style: dynamicStyle,
+});
+
+// Capa a partir de un link wfs
+// Fuente WFS
+const wfsSource = new VectorSource({
+  format: new GeoJSON(),
+  url:
+    "/geoserver/ows?service=WFS&" +
+    "version=1.0.0&request=GetFeature&" +
+    "typename=geonode:30_loc_f&" +
+    "outputFormat=application/json&" +
+    "srsName=EPSG:4326",
+});
+
+export const wfsLayer = new VectorLayer({
+  source: wfsSource,
 });

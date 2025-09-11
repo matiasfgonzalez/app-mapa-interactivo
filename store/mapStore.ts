@@ -13,6 +13,8 @@ interface MapState {
   layers: LayerData[];
   selectedRegion: string | null;
   featureValues: Record<string, any> | null;
+  lon: number | null;
+  lat: number | null;
 
   setMap: (map: any) => void;
   setLayers: (layers: LayerData[]) => void;
@@ -20,6 +22,7 @@ interface MapState {
   setOpacity: (id: string, opacity: number) => void;
   setSelectedRegion: (id: string | null) => void;
   setFeatureValues: (values: Record<string, any> | null) => void;
+  setCoordinate: (lon: number | null, lat: number | null) => void;
 }
 
 export const useMapStore = create<MapState>((set) => ({
@@ -27,6 +30,8 @@ export const useMapStore = create<MapState>((set) => ({
   layers: [],
   selectedRegion: null,
   featureValues: null,
+  lon: null,
+  lat: null,
 
   setMap: (map) => set({ map }),
   setLayers: (layers) => set({ layers }),
@@ -54,4 +59,5 @@ export const useMapStore = create<MapState>((set) => ({
     }),
   setSelectedRegion: (id) => set({ selectedRegion: id }),
   setFeatureValues: (values) => set({ featureValues: values }),
+  setCoordinate: (lon, lat) => set({ lon, lat }),
 }));
