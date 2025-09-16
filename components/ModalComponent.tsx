@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import {
-  getWFSCapabilities,
-  getWFSLayer,
+  getWFSIDECOR,
+  getWFSIDECORLayer,
 } from "@/lib/resources/getWFSCapabilities";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,8 +30,13 @@ import VectorSource from "ol/source/Vector";
 import GeoJSON from "ol/format/GeoJSON";
 import { LayerData, useMapStore } from "@/store/mapStore";
 import { toast } from "sonner";
+import { addLayerGeoJson } from "@/lib/resources/addLayerGeoJson";
 
-const ModalComponent = () => {
+interface ModalComponentProps {
+  children?: React.ReactNode;
+}
+
+const ModalComponent = ({ children }: ModalComponentProps) => {
   const map = useMapStore((s) => s.map);
   const layers = useMapStore((s) => s.layers);
   const setLayers = useMapStore((s) => s.setLayers);
@@ -46,7 +51,9 @@ const ModalComponent = () => {
 
   useEffect(() => {
     const fetchWFS = async () => {
-      const resp = await getWFSCapabilities();
+      const resp = await getWFSIDECOR(
+        "https://idecor-ws.mapascordoba.gob.ar/geoserver/idecor/wfs"
+      );
       setOptions(resp);
     };
 
@@ -66,28 +73,12 @@ const ModalComponent = () => {
 
     try {
       // Obtener GeoJSON de la capa
-      const geojsonData = await getWFSLayer(selectValue);
+      const geojsonData = await getWFSIDECORLayer(selectValue);
 
-      // Crear capa vectorial
-      const vectorLayer = new VectorLayer({
-        source: new VectorSource({
-          features: new GeoJSON().readFeatures(geojsonData, {
-            featureProjection: "EPSG:3857", // reproyección a web mercator
-          }),
-        }),
-        visible: true,
-        opacity: 1,
-      });
-
-      // Datos de la capa en el store
-      const selected = options.find((o) => o.name === selectValue);
-      const layerData: LayerData = {
-        id: selectValue,
-        title: selected?.title || selectValue,
-        visible: true,
-        opacity: 1,
-        layer: vectorLayer,
-      };
+      const { vectorLayer, layerData } = await addLayerGeoJson(
+        geojsonData,
+        selectValue
+      );
 
       // Agregar al mapa
       map.addLayer(vectorLayer);
@@ -95,8 +86,8 @@ const ModalComponent = () => {
       // Actualizar estado
       setLayers([...layers, layerData]);
 
-      toast.success(`Capa "${layerData.title}" agregada correctamente.`);
-      console.log("Capa agregada:", layerData);
+      toast.success(`Capa "${selectValue}" agregada correctamente.`);
+      console.log("Capa agregada:", selectValue);
     } catch (error) {
       toast.error("Error al cargar la capa seleccionada.");
       console.error(error);
@@ -107,12 +98,14 @@ const ModalComponent = () => {
     <Dialog>
       <form>
         <DialogTrigger asChild>
-          <Button
-            variant="outline"
-            className="bg-emerald-300 hover:bg-emerald-200 cursor-pointer"
-          >
-            Modal WFS IDEER
-          </Button>
+          {children || (
+            <Button
+              variant="outline"
+              className="bg-emerald-300 hover:bg-emerald-200 cursor-pointer"
+            >
+              Modal WFS IDEER
+            </Button>
+          )}
         </DialogTrigger>
         <DialogContent className="sm:max-w-2/4">
           <DialogHeader>

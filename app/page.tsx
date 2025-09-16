@@ -15,12 +15,10 @@ import {
   ChevronDown,
   Bell,
   User,
-  Globe,
   ChevronUp,
 } from "lucide-react";
 import { LayerData, useMapStore } from "@/store/mapStore";
-import { getWFSCapabilities } from "@/lib/resources/getWFSCapabilities";
-import ModalComponent from "@/components/ModalComponent";
+import { NavigationMenuOptions } from "@/components/NavigationMenu";
 
 export default function HomePage() {
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(false); // Cerrado por defecto en mobile
@@ -30,15 +28,15 @@ export default function HomePage() {
   const [mobileBottomPanelOpen, setMobileBottomPanelOpen] = useState(false);
 
   // Zustand
-  const map = useMapStore((s) => s.map); // referencia al ma
+  const map = useMapStore((s) => s.map);
   const layers = useMapStore((s) => s.layers);
   const setLayers = useMapStore((s) => s.setLayers);
   const toggleLayer = useMapStore((s) => s.toggleLayer);
   const setOpacity = useMapStore((s) => s.setOpacity);
   const selectedRegion = useMapStore((s) => s.selectedRegion);
   const featureValues = useMapStore((s) => s.featureValues);
-  const lon = useMapStore((s) => s.lon); // referencia al ma
-  const lat = useMapStore((s) => s.lat); // referencia al ma
+  const lon = useMapStore((s) => s.lon);
+  const lat = useMapStore((s) => s.lat);
 
   // Detectar si es dispositivo móvil
   useEffect(() => {
@@ -103,11 +101,6 @@ export default function HomePage() {
     });
   }
 
-  const obtenerCapasWFS = async () => {
-    const resp = await getWFSCapabilities();
-    console.log(resp);
-  };
-
   return (
     <div className="h-screen flex flex-col bg-gray-50">
       {/* Navigation Header */}
@@ -126,8 +119,11 @@ export default function HomePage() {
                 <Menu size={18} className="sm:w-5 sm:h-5" />
               </button>
               <div className="flex items-center space-x-1 sm:space-x-2">
-                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                  <Globe className="text-white" size={14} />
+                <div className="w-32 h-8  rounded-lg flex items-center justify-center">
+                  <img
+                    alt="conicet"
+                    src="https://www.conicet.gov.ar/wp-content/uploads/CICYTTP-CONICET-UADER-Provincia-de-Entre-Rios-WEB.png"
+                  />
                 </div>
                 <span className="text-lg sm:text-xl font-semibold text-gray-900 hidden xs:block">
                   GeoAnalytics
@@ -137,30 +133,7 @@ export default function HomePage() {
 
             {/* Menú central - Solo visible en desktop */}
             <div className="hidden lg:flex items-center space-x-6">
-              <a
-                href="#"
-                className="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors"
-              >
-                Dashboard
-              </a>
-              <a
-                href="#"
-                className="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors"
-              >
-                Mapas
-              </a>
-              <a
-                href="#"
-                className="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors"
-              >
-                Análisis
-              </a>
-              <a
-                href="#"
-                className="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors"
-              >
-                Reportes
-              </a>
+              <NavigationMenuOptions />
             </div>
 
             {/* Controles derecha */}
@@ -258,10 +231,6 @@ export default function HomePage() {
                   <h3 className="font-medium text-gray-900 text-sm sm:text-base">
                     Capas Disponibles
                   </h3>
-                  <button onClick={obtenerCapasWFS}>
-                    Obtener listado de capas wfs
-                  </button>
-                  <ModalComponent />
                   {/* Layers Section */}
                   <div className="flex-1 p-1 overflow-y-auto">
                     {activeSection === "layers" && (
