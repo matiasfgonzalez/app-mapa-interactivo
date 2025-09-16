@@ -16,6 +16,7 @@ import {
   Bell,
   User,
   ChevronUp,
+  InfoIcon,
 } from "lucide-react";
 import { LayerData, useMapStore } from "@/store/mapStore";
 import { NavigationMenuOptions } from "@/components/NavigationMenu";
@@ -122,11 +123,11 @@ export default function HomePage() {
                 <div className="w-32 h-8  rounded-lg flex items-center justify-center">
                   <img
                     alt="conicet"
-                    src="https://www.conicet.gov.ar/wp-content/uploads/CICYTTP-CONICET-UADER-Provincia-de-Entre-Rios-WEB.png"
+                    src="https://ceregeo.github.io/Ceregeo/images/logoceregeo.png"
                   />
                 </div>
                 <span className="text-lg sm:text-xl font-semibold text-gray-900 hidden xs:block">
-                  GeoAnalytics
+                  CEREGEO
                 </span>
               </div>
             </div>
@@ -407,8 +408,8 @@ export default function HomePage() {
           </div>
 
           {/* Map Scale/Info */}
-          <div className="absolute bottom-4 left-4 bg-white px-2 sm:px-3 py-1 sm:py-2 rounded-lg shadow text-xs sm:text-sm">
-            Escala: 1:50000
+          <div className="cursor-pointer absolute bottom-4 left-4 bg-white px-2 sm:px-3 py-1 sm:py-2 rounded-lg shadow text-xs sm:text-sm hover:bg-blue-300">
+            <InfoIcon />
           </div>
 
           {/* Mobile Bottom Panel Toggle */}

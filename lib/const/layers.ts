@@ -2,7 +2,7 @@ import { Tile as TileLayer, Vector as VectorLayer } from "ol/layer";
 import { OSM } from "ol/source";
 import VectorSource from "ol/source/Vector";
 import GeoJSON from "ol/format/GeoJSON";
-import { dynamicStyle } from "./styles";
+import { dynamicStyle, styleUniFcyt } from "./styles";
 import KML from "ol/format/KML";
 import JSZip from "jszip";
 import { Style, Stroke, Fill, Circle as CircleStyle, Text } from "ol/style";
@@ -21,7 +21,7 @@ const vectorSourceUniUader = new VectorSource({
 
 export const uniUaderLayer = new VectorLayer({
   source: vectorSourceUniUader,
-  style: dynamicStyle,
+  style: styleUniFcyt,
 });
 
 //  Capa areas de actividad agropecuaria KML

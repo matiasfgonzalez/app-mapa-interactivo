@@ -32,12 +32,7 @@ export default function Mapa() {
     // Crear mapa
     const map = new Map({
       target: mapRef.current,
-      layers: [
-        baseLayer,
-        argentina_division_politicaLayer,
-        uniUaderLayer,
-        areasDeActividadAgropecuariaLayer,
-      ],
+      layers: [baseLayer, uniUaderLayer],
       view: new View({
         center: fromLonLat([-59, -32]),
         zoom: 7,
@@ -55,25 +50,11 @@ export default function Mapa() {
         layer: baseLayer,
       },
       {
-        id: "argentina_division_politicaLayer",
-        title: "Division politica Argentina",
-        visible: true,
-        opacity: 0.8,
-        layer: argentina_division_politicaLayer,
-      },
-      {
         id: "uni_uader",
         title: "Ubicación Unidades Académicas UADER",
         visible: true,
         opacity: 1,
         layer: uniUaderLayer,
-      },
-      {
-        id: "areas_de_actividad_agropecuaria",
-        title: "Área de actividades agro (KML)",
-        visible: true,
-        opacity: 0.8,
-        layer: areasDeActividadAgropecuariaLayer,
       },
     ]);
 
