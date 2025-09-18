@@ -9,12 +9,18 @@ import {
 import { Geometry } from "ol/geom";
 import { wrapText } from "../resources/wrapText";
 import { useMapStore } from "@/store/mapStore";
+import { FeatureLike } from "ol/Feature";
 
-export const dynamicStyle = (feature: any) => {
-  const geometry: Geometry = feature.getGeometry();
+export const dynamicStyle = (feature: FeatureLike): Style => {
+  const geometry = feature.getGeometry() as Geometry | undefined;
+  if (!geometry) {
+    return new Style({
+      stroke: new Stroke({ color: "#000", width: 1 }),
+      fill: new Fill({ color: "rgba(200, 200, 200, 0.3)" }),
+    });
+  }
+
   const type = geometry.getType();
-
-  // Propiedad que quieras mostrar como label
   const label = feature.get("nombre") || feature.get("Name") || "";
 
   if (type === "Point") {
@@ -36,46 +42,48 @@ export const dynamicStyle = (feature: any) => {
 
   if (type === "LineString" || type === "MultiLineString") {
     return new Style({
-      stroke: new Stroke({
-        color: "rgba(255, 140, 0, 0.9)", // naranja
-        width: 3,
-      }),
+      stroke: new Stroke({ color: "rgba(255, 140, 0, 0.9)", width: 3 }),
     });
   }
 
   if (type === "Polygon" || type === "MultiPolygon") {
     return new Style({
       stroke: new Stroke({ color: "#333", width: 2 }),
-      fill: new Fill({
-        color: "rgba(50, 205, 50, 0.4)", // verde semi
-      }),
+      fill: new Fill({ color: "rgba(50, 205, 50, 0.4)" }),
     });
   }
 
-  // fallback (por si hay geometrías no contempladas)
+  // fallback
   return new Style({
     stroke: new Stroke({ color: "#000", width: 1 }),
     fill: new Fill({ color: "rgba(200, 200, 200, 0.3)" }),
   });
 };
 
-export const styleUniFcyt = (feature: any) => {
-  const map = useMapStore.getState().map; // obtener el mapa desde el store
+export const styleUniFcyt = (feature: FeatureLike): Style => {
+  const geometry = feature.getGeometry() as Geometry | undefined;
+  if (!geometry) {
+    return new Style({
+      stroke: new Stroke({ color: "#000", width: 1 }),
+      fill: new Fill({ color: "rgba(200,200,200,0.3)" }),
+    });
+  }
 
-  const zoom = map.getView().getZoom() ?? 0;
-
-  const geometry: Geometry = feature.getGeometry();
   const type = geometry.getType();
+  const map = useMapStore.getState().map;
+  const zoom = map?.getView().getZoom() ?? 0;
 
-  // Propiedad que quieras mostrar como label
-  const label = zoom >= 11 ? feature.get("sede_nomb") : feature.get("sede");
+  const label: string =
+    zoom >= 11
+      ? (feature.get("sede_nomb") as string)
+      : (feature.get("sede") as string);
 
   if (type === "Point") {
-    const style = new Style({
+    return new Style({
       image: new Icon({
-        src: "/pin-colegio.png", // ruta a la imagen (puede ser PNG, JPG o SVG)
-        scale: 0.7, // para ajustar el tamaño
-        anchor: [0.5, 1], // punto de anclaje (centro abajo)
+        src: "/pin-colegio.png",
+        scale: 0.7,
+        anchor: [0.5, 1],
       }),
       text: new Text({
         text: wrapText(label, 35).join("\n"),
@@ -85,12 +93,10 @@ export const styleUniFcyt = (feature: any) => {
         offsetY: -32,
       }),
     });
-
-    return style;
   }
 
   return new Style({
     stroke: new Stroke({ color: "#000", width: 1 }),
-    fill: new Fill({ color: "rgba(200, 200, 200, 0.3)" }),
+    fill: new Fill({ color: "rgba(200,200,200,0.3)" }),
   });
 };

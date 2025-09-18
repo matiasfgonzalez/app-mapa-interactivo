@@ -10,12 +10,7 @@ import { useMapStore } from "@/store/mapStore";
 import { Select } from "ol/interaction";
 import { click } from "ol/events/condition";
 import CircleStyle from "ol/style/Circle";
-import {
-  areasDeActividadAgropecuariaLayer,
-  argentina_division_politicaLayer,
-  baseLayer,
-  uniUaderLayer,
-} from "@/lib/const/layers";
+import { baseLayer, uniUaderLayer } from "@/lib/const/layers";
 
 export default function Mapa() {
   const mapRef = useRef<HTMLDivElement | null>(null);

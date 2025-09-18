@@ -5,7 +5,6 @@ import GeoJSON from "ol/format/GeoJSON";
 import { dynamicStyle, styleUniFcyt } from "./styles";
 import KML from "ol/format/KML";
 import JSZip from "jszip";
-import { Style, Stroke, Fill, Circle as CircleStyle, Text } from "ol/style";
 // Capas para insertar en el mapa
 
 // Capa base OSM

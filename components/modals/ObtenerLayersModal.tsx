@@ -30,7 +30,7 @@ import { toast } from "sonner";
 
 interface ObtenerLayersModalProps {
   children?: React.ReactNode;
-  showButton: boolean;
+  showButton?: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }

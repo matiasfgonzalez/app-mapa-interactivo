@@ -63,7 +63,17 @@ export default function HomePage() {
     }
   }, [leftSidebarOpen, rightSidebarOpen, isMobile]);
 
-  const resultados: Record<string, any> = {
+  type Voto = {
+    partido: string;
+    porcentaje: number;
+  };
+
+  type Region = {
+    nombre: string;
+    votos: Voto[];
+  };
+
+  const resultados: Record<string, Region> = {
     region1: {
       nombre: "Sección 1",
       votos: [

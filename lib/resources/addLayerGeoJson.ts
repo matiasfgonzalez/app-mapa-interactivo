@@ -2,8 +2,12 @@ import { Vector as VectorLayer } from "ol/layer";
 import VectorSource from "ol/source/Vector";
 import GeoJSON from "ol/format/GeoJSON";
 import { LayerData } from "@/store/mapStore";
+import type { GeoJSON as GeoJSONType } from "geojson";
 
-export const addLayerGeoJson = async (geoJson: any, layerName: string) => {
+export const addLayerGeoJson = async (
+  geoJson: GeoJSONType,
+  layerName: string
+) => {
   // Crear capa vectorial
   const vectorLayer = new VectorLayer({
     source: new VectorSource({

@@ -25,12 +25,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Vector as VectorLayer } from "ol/layer";
-import VectorSource from "ol/source/Vector";
-import GeoJSON from "ol/format/GeoJSON";
-import { LayerData, useMapStore } from "@/store/mapStore";
 import { toast } from "sonner";
 import { addLayerGeoJson } from "@/lib/resources/addLayerGeoJson";
+import { useMapStore } from "@/store/mapStore";
 
 interface ModalComponentProps {
   children?: React.ReactNode;
