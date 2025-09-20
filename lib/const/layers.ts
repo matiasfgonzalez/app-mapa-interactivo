@@ -2,9 +2,15 @@ import { Tile as TileLayer, Vector as VectorLayer } from "ol/layer";
 import { OSM } from "ol/source";
 import VectorSource from "ol/source/Vector";
 import GeoJSON from "ol/format/GeoJSON";
-import { dynamicStyle, styleUniFcyt } from "./styles";
+import { createCircleIcon, dynamicStyle, styleUniFcyt } from "./styles";
 import KML from "ol/format/KML";
 import JSZip from "jszip";
+import { User } from "@supabase/supabase-js";
+import Feature from "ol/Feature";
+import { Point } from "ol/geom";
+import { fromLonLat } from "ol/proj";
+import { Icon, Style } from "ol/style";
+import { EstudianteType } from "../types/estudianteType";
 // Capas para insertar en el mapa
 
 // Capa base OSM
@@ -78,4 +84,55 @@ const wfsSource = new VectorSource({
 
 export const wfsLayer = new VectorLayer({
   source: wfsSource,
+});
+
+// Llamar a la api y obtener los datos y a partir de las coordenadas crear features
+export const fetchUbicacionesDelEstudiante = async (user: User) => {
+  const response = await fetch(`/api/ubicaciones?user_id=${user.id}`);
+  const result = await response.json();
+  if (result.success) {
+    const featuresData = result.data;
+
+    const canvas = await createCircleIcon(
+      user.user_metadata?.avatar_url || "/default-avatar.png",
+      50
+    );
+
+    // Crear features a partir de los datos
+    const features = featuresData.map((u: EstudianteType) => {
+      const feature = new Feature({
+        geometry: new Point(fromLonLat([u.lon, u.lat])),
+        ...u,
+      });
+
+      feature.setStyle(
+        new Style({
+          image: new Icon({
+            img: canvas,
+            scale: 0.7,
+            anchor: [0.5, 1],
+          }),
+        })
+      );
+
+      return feature;
+    });
+
+    // Crear capa vectorial
+    const vectorLayer = new VectorLayer({
+      source: new VectorSource({
+        features,
+      }),
+    });
+
+    return vectorLayer;
+  } else {
+    console.error("Error al cargar ubicaciones:", result.error);
+    return null;
+  }
+};
+
+export const ubicacionDelEstudianteLayer = new VectorLayer({
+  source: new VectorSource(),
+  style: dynamicStyle,
 });

@@ -100,3 +100,25 @@ export const styleUniFcyt = (feature: FeatureLike): Style => {
     fill: new Fill({ color: "rgba(200,200,200,0.3)" }),
   });
 };
+
+export const createCircleIcon = async (imgUrl: string, size = 50) => {
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d")!;
+  const img = new Image();
+  img.src = imgUrl;
+  return new Promise<HTMLCanvasElement>((resolve) => {
+    img.onload = () => {
+      ctx.clearRect(0, 0, size, size);
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2, true);
+      ctx.closePath();
+      ctx.clip();
+      ctx.drawImage(img, 0, 0, size, size);
+      ctx.restore();
+      resolve(canvas);
+    };
+  });
+};

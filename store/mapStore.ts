@@ -15,6 +15,8 @@ interface MapState {
   featureValues: Record<string, any> | null;
   lon: number | null;
   lat: number | null;
+  checkUbicacion: boolean;
+  modalOpen: boolean;
 
   setMap: (map: any) => void;
   setLayers: (layers: LayerData[]) => void;
@@ -23,15 +25,19 @@ interface MapState {
   setSelectedRegion: (id: string | null) => void;
   setFeatureValues: (values: Record<string, any> | null) => void;
   setCoordinate: (lon: number | null, lat: number | null) => void;
+  setCheckUbicacion: (check: boolean) => void;
+  setModalOpen: (open: boolean) => void;
 }
 
-export const useMapStore = create<MapState>((set) => ({
+export const useMapStore = create<MapState>((set, get) => ({
   map: null,
   layers: [],
   selectedRegion: null,
   featureValues: null,
   lon: null,
   lat: null,
+  checkUbicacion: false,
+  modalOpen: false,
 
   setMap: (map) => set({ map }),
   setLayers: (layers) => set({ layers }),
@@ -60,4 +66,12 @@ export const useMapStore = create<MapState>((set) => ({
   setSelectedRegion: (id) => set({ selectedRegion: id }),
   setFeatureValues: (values) => set({ featureValues: values }),
   setCoordinate: (lon, lat) => set({ lon, lat }),
+  setCheckUbicacion: (check) => set({ checkUbicacion: check }),
+  setModalOpen: (open) => {
+    if (open && get().checkUbicacion) {
+      set({ modalOpen: true });
+    } else if (!open) {
+      set({ modalOpen: false });
+    }
+  },
 }));

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Mapa from "@/components/Mapa";
-import Resultados from "@/components/Resultados";
 import {
   Menu,
   X,
@@ -16,11 +15,15 @@ import {
   Bell,
   ChevronUp,
   InfoIcon,
+  MapPin,
 } from "lucide-react";
 import { LayerData, useMapStore } from "@/store/mapStore";
 import { NavigationMenuOptions } from "@/components/NavigationMenu";
 import { useAuth } from "@/hooks/useAuth";
 import UserMenu from "@/components/UserMenu";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import LocationModal from "@/components/modals/LocationModal";
 
 export default function HomePage() {
   const { user, loading } = useAuth();
@@ -37,10 +40,11 @@ export default function HomePage() {
   const setLayers = useMapStore((s) => s.setLayers);
   const toggleLayer = useMapStore((s) => s.toggleLayer);
   const setOpacity = useMapStore((s) => s.setOpacity);
-  const selectedRegion = useMapStore((s) => s.selectedRegion);
   const featureValues = useMapStore((s) => s.featureValues);
   const lon = useMapStore((s) => s.lon);
   const lat = useMapStore((s) => s.lat);
+  const checkUbicacion = useMapStore((s) => s.checkUbicacion);
+  const setCheckUbicacion = useMapStore((s) => s.setCheckUbicacion);
 
   // Detectar si es dispositivo móvil
   useEffect(() => {
@@ -74,30 +78,6 @@ export default function HomePage() {
   type Region = {
     nombre: string;
     votos: Voto[];
-  };
-
-  const resultados: Record<string, Region> = {
-    region1: {
-      nombre: "Sección 1",
-      votos: [
-        { partido: "Fuerza Patria", porcentaje: 47.28 },
-        { partido: "La Libertad Avanza", porcentaje: 33.71 },
-      ],
-    },
-    region2: {
-      nombre: "Sección 2",
-      votos: [
-        { partido: "Fuerza Patria", porcentaje: 40.0 },
-        { partido: "La Libertad Avanza", porcentaje: 45.0 },
-      ],
-    },
-    region3: {
-      nombre: "Sección 3",
-      votos: [
-        { partido: "Fuerza Patria", porcentaje: 30.0 },
-        { partido: "La Libertad Avanza", porcentaje: 50.0 },
-      ],
-    },
   };
 
   function reorderLayers(newLayers: LayerData[]) {
@@ -239,6 +219,42 @@ export default function HomePage() {
             <div className="flex-1 p-3 sm:p-4 overflow-y-auto">
               {activeSection === "layers" && (
                 <div className="space-y-3 sm:space-y-4">
+                  {user && (
+                    <div className="space-y-2 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+                      {/* Encabezado */}
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-5 w-5 text-blue-600" />
+                        <h3 className="text-base font-semibold text-gray-900">
+                          Declarar ubicación
+                        </h3>
+                      </div>
+
+                      {/* Checkbox + Label */}
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id="ubicacion"
+                          checked={checkUbicacion}
+                          onCheckedChange={() =>
+                            setCheckUbicacion(!checkUbicacion)
+                          }
+                        />
+                        <Label
+                          htmlFor="ubicacion"
+                          className="text-sm text-gray-700 cursor-pointer"
+                        >
+                          Habilitar selección en el mapa
+                        </Label>
+                      </div>
+
+                      {/* Descripción */}
+                      <p className="text-sm text-gray-600 leading-relaxed">
+                        Si la opción está seleccionada, al hacer click en el
+                        mapa se obtendrán las coordenadas de ese punto y se
+                        abrirá un modal para cargar más datos.
+                      </p>
+                    </div>
+                  )}
+
                   <h3 className="font-medium text-gray-900 text-sm sm:text-base">
                     Capas Disponibles
                   </h3>
@@ -504,13 +520,9 @@ export default function HomePage() {
 
             {/* Properties Panel */}
             <div className="flex-1 p-3 sm:p-4 overflow-y-auto space-y-4 sm:space-y-6">
-              {selectedRegion ? (
-                <Resultados data={resultados[selectedRegion]} />
-              ) : (
-                <p className="text-gray-500">
-                  Haz clic en una región para ver resultados
-                </p>
-              )}
+              <p className="text-gray-500">
+                Haz clic en una región para ver resultados
+              </p>
               {featureValues && (
                 <div>
                   <p className="font-bold">Objeto seleccionado</p>
@@ -529,6 +541,8 @@ export default function HomePage() {
           </div>
         </div>
       </div>
+
+      <LocationModal />
 
       {/* Footer - Oculto en mobile */}
       <footer className="bg-white border-t border-gray-200 px-3 sm:px-4 py-2 sm:py-3 hidden sm:block">

@@ -10,16 +10,26 @@ import { useMapStore } from "@/store/mapStore";
 import { Select } from "ol/interaction";
 import { click } from "ol/events/condition";
 import CircleStyle from "ol/style/Circle";
-import { baseLayer, uniUaderLayer } from "@/lib/const/layers";
+import {
+  baseLayer,
+  fetchUbicacionesDelEstudiante,
+  uniUaderLayer,
+} from "@/lib/const/layers";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Mapa() {
   const mapRef = useRef<HTMLDivElement | null>(null);
   const setMap = useMapStore((s) => s.setMap);
+  const map = useMapStore((s) => s.map);
   const setLayers = useMapStore((s) => s.setLayers);
+  const layers = useMapStore((s) => s.layers);
   const setSelectedRegion = useMapStore((s) => s.setSelectedRegion);
   const setFeatureValues = useMapStore((s) => s.setFeatureValues);
 
   const setCoordinate = useMapStore((s) => s.setCoordinate);
+  const setModalOpen = useMapStore((s) => s.setModalOpen);
+
+  const { user } = useAuth();
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -152,6 +162,8 @@ export default function Mapa() {
           setSelectedRegion(id);
         }
         setFeatureValues(values);
+      } else {
+        setModalOpen(true);
       }
     });
 
@@ -162,6 +174,42 @@ export default function Mapa() {
 
     return () => map.setTarget(undefined);
   }, [setMap, setLayers, setSelectedRegion]);
+
+  // 2️⃣ Cargar ubicaciones solo cuando el usuario ya esté disponible
+  useEffect(() => {
+    if (!user) return;
+
+    const loadUbicaciones = async () => {
+      try {
+        const vectorLayer = await fetchUbicacionesDelEstudiante(user);
+
+        // Agregar la capa al mapa
+        map.addLayer(vectorLayer);
+
+        // Validar si ya existe una layer similar, eliminarla para evitar duplicados
+        const existingIndex = layers.findIndex(
+          (l) => l.id === "ubicacion_estudiante"
+        );
+        if (existingIndex !== -1) {
+          const existingLayer = layers[existingIndex].layer;
+          map.removeLayer(existingLayer);
+          layers.splice(existingIndex, 1); // Eliminar del estado
+        }
+
+        layers.push({
+          id: "ubicacion_estudiante",
+          title: "Mi Ubicación",
+          visible: true,
+          opacity: 1,
+          layer: vectorLayer,
+        });
+      } catch (err) {
+        console.error("Error cargando ubicaciones:", err);
+      }
+    };
+
+    loadUbicaciones();
+  }, [user]);
 
   return <div ref={mapRef} className="w-full h-full border shadow" />;
 }
