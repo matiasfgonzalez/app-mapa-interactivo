@@ -14,14 +14,17 @@ import {
   Share,
   ChevronDown,
   Bell,
-  User,
   ChevronUp,
   InfoIcon,
 } from "lucide-react";
 import { LayerData, useMapStore } from "@/store/mapStore";
 import { NavigationMenuOptions } from "@/components/NavigationMenu";
+import { useAuth } from "@/hooks/useAuth";
+import UserMenu from "@/components/UserMenu";
 
 export default function HomePage() {
+  const { user, loading } = useAuth();
+
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(false); // Cerrado por defecto en mobile
   const [rightSidebarOpen, setRightSidebarOpen] = useState(false); // Cerrado por defecto en mobile
   const [activeSection, setActiveSection] = useState("layers");
@@ -152,10 +155,7 @@ export default function HomePage() {
               <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors hidden sm:block">
                 <Bell size={18} />
               </button>
-              <button className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
-                <User size={16} className="sm:w-[18px] sm:h-[18px]" />
-                <ChevronDown size={14} className="hidden sm:block" />
-              </button>
+              <UserMenu user={user} loading={loading} />
               <button
                 onClick={() => {
                   setRightSidebarOpen(!rightSidebarOpen);
