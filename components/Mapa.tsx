@@ -16,6 +16,7 @@ import {
   uniUaderLayer,
 } from "@/lib/const/layers";
 import { useAuth } from "@/hooks/useAuth";
+import Overlay from "ol/Overlay";
 
 export default function Mapa() {
   const mapRef = useRef<HTMLDivElement | null>(null);
@@ -29,7 +30,137 @@ export default function Mapa() {
   const setCoordinate = useMapStore((s) => s.setCoordinate);
   const setModalOpen = useMapStore((s) => s.setModalOpen);
 
+  const lon = useMapStore((s) => s.lon);
+  const lat = useMapStore((s) => s.lat);
+
   const { user } = useAuth();
+
+  // Función para cerrar popup
+  const closePopup = (popupElement: HTMLElement, popupOverlay: Overlay) => {
+    popupElement.style.display = "none";
+    popupOverlay.setPosition(undefined);
+    popupElement.classList.add("hidden");
+  };
+
+  // Función para manejar la modificación
+  const handleModificar = (featureId: string, featureData: any) => {
+    console.log("Modificar feature:", featureId, featureData);
+    // Aquí puedes agregar tu lógica de modificación
+    // Por ejemplo, abrir un modal de edición
+    setModalOpen(true);
+    // O navegar a una página de edición
+    // router.push(`/editar/${featureId}`);
+  };
+
+  // Función para manejar la eliminación
+  const handleEliminar = (featureId: string, featureName: string) => {
+    const confirmDelete = window.confirm(
+      `¿Estás seguro de que deseas eliminar "${
+        featureName || "este elemento"
+      }"?`
+    );
+
+    if (confirmDelete) {
+      console.log("Eliminar feature:", featureId);
+      // Aquí puedes agregar tu lógica de eliminación
+      // Por ejemplo, llamar a una API
+      // deleteFeature(featureId);
+
+      // Cerrar el popup después de eliminar
+      const popupElement = document.getElementById("popup") as HTMLElement;
+      const popupOverlay = map
+        ?.getAllOverlays()
+        .find((overlay) => overlay.getElement() === popupElement);
+      if (popupOverlay) {
+        closePopup(popupElement, popupOverlay);
+      }
+    }
+  };
+
+  // Función para crear contenido del popup mejorado
+  const createPopupContent = (
+    values: any,
+    popupElement: HTMLElement,
+    popupOverlay: Overlay
+  ) => {
+    const featureId = values.id || values.gid || values.objectid || "unknown";
+    const featureName = values.nombre || "Región Seleccionada";
+
+    return `
+      <div class="popup-container">
+        <!-- Header del popup -->
+        <div class="popup-header">
+          <h3 class="popup-title">${featureName}</h3>
+          <button class="popup-close" onclick="document.getElementById('popup').style.display='none'">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        
+        <!-- Contenido con scroll -->
+        <div class="popup-content">
+          ${Object.entries(values)
+            .filter(
+              ([key]) =>
+                key !== "geometry" &&
+                key !== "nombre" &&
+                key !== "id" &&
+                key !== "gid" &&
+                key !== "objectid" &&
+                key !== "user_id" &&
+                key !== "created_at" &&
+                key !== "created_by" &&
+                key !== "updated_at" &&
+                key !== "updated_by"
+            )
+            .map(
+              ([key, val]) => `
+              <div class="popup-item">
+                <span class="popup-label">${
+                  key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, " ")
+                }:</span>
+                <span class="popup-value">${val || "N/A"}</span>
+              </div>
+            `
+            )
+            .join("")}
+        </div>
+        
+        <!-- Botones de acción -->
+        <div class="popup-actions">
+          <button 
+            class="popup-btn popup-btn-edit" 
+            onclick="window.mapInstance?.handleModificar('${featureId}', ${JSON.stringify(
+      values
+    ).replace(/"/g, "&quot;")})"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+              <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+            Modificar
+          </button>
+          <button 
+            class="popup-btn popup-btn-delete" 
+            onclick="window.mapInstance?.handleEliminar('${featureId}', '${featureName.replace(
+      /'/g,
+      "\\'"
+    )}')"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3,6 5,6 21,6"></polyline>
+              <path d="m19,6v14a2,2 0,0 1,-2,2H7a2,2 0,0 1,-2,-2V6m3,0V4a2,2 0,0 1,2,-2h4a2,2 0,0 1,2,2V6"></path>
+              <line x1="10" y1="11" x2="10" y2="17"></line>
+              <line x1="14" y1="11" x2="14" y2="17"></line>
+            </svg>
+            Eliminar
+          </button>
+        </div>
+      </div>
+    `;
+  };
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -46,6 +177,13 @@ export default function Mapa() {
 
     // Guardar referencia global del mapa y capas en Zustand
     setMap(map);
+
+    // Exponer funciones al window para que puedan ser llamadas desde el HTML
+    (window as any).mapInstance = {
+      handleModificar,
+      handleEliminar,
+    };
+
     setLayers([
       {
         id: "base",
@@ -62,6 +200,16 @@ export default function Mapa() {
         layer: uniUaderLayer,
       },
     ]);
+
+    // Crear overlay para popup
+    const popupElement = document.getElementById("popup") as HTMLElement;
+    const popupOverlay = new Overlay({
+      element: popupElement,
+      positioning: "bottom-center",
+      stopEvent: true,
+      offset: [0, -10], // para que no tape el punto
+    });
+    map.addOverlay(popupOverlay);
 
     // 🎯 Interacción de selección
     const select = new Select({
@@ -137,11 +285,25 @@ export default function Mapa() {
             padding: [50, 50, 50, 50],
             maxZoom: 14,
           });
+
+          // Mostrar popup mejorado en el centro de la geometría
+          const center = geometry.getClosestPoint(
+            fromLonLat([lon || 0, lat || 0])
+          );
+          popupOverlay.setPosition(center);
+          popupElement.innerHTML = createPopupContent(
+            values,
+            popupElement,
+            popupOverlay
+          );
+          popupElement.style.display = "block";
+          popupElement.classList.remove("hidden");
         }
       } else {
         // Deselección
         setSelectedRegion(null);
         setFeatureValues(null);
+        closePopup(popupElement, popupOverlay);
       }
     });
 
@@ -172,7 +334,18 @@ export default function Mapa() {
       setCoordinate(lon, lat);
     });
 
-    return () => map.setTarget(undefined);
+    // Cerrar popup al hacer clic fuera
+    map.on("click", (evt) => {
+      if (!map.forEachFeatureAtPixel(evt.pixel, (f) => f)) {
+        closePopup(popupElement, popupOverlay);
+      }
+    });
+
+    return () => {
+      // Limpiar referencias del window
+      delete (window as any).mapInstance;
+      map.setTarget(undefined);
+    };
   }, [setMap, setLayers, setSelectedRegion]);
 
   // 2️⃣ Cargar ubicaciones solo cuando el usuario ya esté disponible
@@ -211,5 +384,235 @@ export default function Mapa() {
     loadUbicaciones();
   }, [user]);
 
-  return <div ref={mapRef} className="w-full h-full border shadow" />;
+  return (
+    <>
+      <div className="w-full h-full border shadow relative">
+        <div ref={mapRef} className="w-full h-full" />
+        <div
+          id="popup"
+          className="absolute bg-white text-gray-800 rounded-lg shadow-xl border border-gray-200 hidden z-50 min-w-[280px] max-w-[400px] popup-animated"
+          style={{
+            backdropFilter: "blur(10px)",
+            backgroundColor: "rgba(255, 255, 255, 0.95)",
+          }}
+        />
+      </div>
+
+      {/* Estilos CSS integrados */}
+      <style jsx global>{`
+        .popup-container {
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+            sans-serif;
+          overflow: hidden;
+          border-radius: 12px;
+        }
+
+        .popup-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 16px 20px 12px 20px;
+          border-bottom: 1px solid #e5e7eb;
+          background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        }
+
+        .popup-title {
+          font-size: 16px;
+          font-weight: 600;
+          color: #1f2937;
+          margin: 0;
+          line-height: 1.4;
+          max-width: 200px;
+          word-break: break-word;
+        }
+
+        .popup-close {
+          background: none;
+          border: none;
+          color: #6b7280;
+          cursor: pointer;
+          padding: 4px;
+          border-radius: 6px;
+          transition: all 0.2s ease;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+
+        .popup-close:hover {
+          background-color: #f3f4f6;
+          color: #374151;
+        }
+
+        .popup-content {
+          max-height: 300px;
+          overflow-y: auto;
+          padding: 16px 20px 20px 20px;
+
+          /* Scroll elegante */
+          scrollbar-width: thin;
+          scrollbar-color: #cbd5e1 transparent;
+        }
+
+        .popup-content::-webkit-scrollbar {
+          width: 6px;
+        }
+
+        .popup-content::-webkit-scrollbar-track {
+          background: transparent;
+          border-radius: 3px;
+        }
+
+        .popup-content::-webkit-scrollbar-thumb {
+          background-color: #cbd5e1;
+          border-radius: 3px;
+          transition: background-color 0.2s ease;
+        }
+
+        .popup-content::-webkit-scrollbar-thumb:hover {
+          background-color: #94a3b8;
+        }
+
+        .popup-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          padding: 8px 0;
+          border-bottom: 1px solid #f1f5f9;
+          gap: 12px;
+        }
+
+        .popup-item:last-child {
+          border-bottom: none;
+          padding-bottom: 0;
+        }
+
+        .popup-label {
+          font-size: 13px;
+          font-weight: 500;
+          color: #4b5563;
+          flex-shrink: 0;
+          min-width: 80px;
+        }
+
+        .popup-value {
+          font-size: 13px;
+          color: #1f2937;
+          text-align: right;
+          word-break: break-word;
+          line-height: 1.4;
+        }
+
+        /* Animación de entrada */
+        .popup-animated {
+          transition: all 0.2s ease;
+          transform: translateY(-5px);
+          opacity: 0;
+        }
+
+        .popup-animated[style*="block"] {
+          transform: translateY(0);
+          opacity: 1;
+        }
+
+        /* Botones de acción */
+        .popup-actions {
+          display: flex;
+          gap: 8px;
+          padding: 16px 20px;
+          border-top: 1px solid #e5e7eb;
+          background: #f9fafb;
+          border-bottom-left-radius: 12px;
+          border-bottom-right-radius: 12px;
+        }
+
+        .popup-btn {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          padding: 10px 16px;
+          font-size: 13px;
+          font-weight: 500;
+          border: none;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          text-decoration: none;
+        }
+
+        .popup-btn-edit {
+          background-color: #3b82f6;
+          color: white;
+        }
+
+        .popup-btn-edit:hover {
+          background-color: #2563eb;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+        }
+
+        .popup-btn-delete {
+          background-color: #ef4444;
+          color: white;
+        }
+
+        .popup-btn-delete:hover {
+          background-color: #dc2626;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+        }
+
+        .popup-btn svg {
+          width: 16px;
+          height: 16px;
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+          #popup {
+            min-width: 260px !important;
+            max-width: 300px !important;
+          }
+
+          .popup-header {
+            padding: 12px 16px 10px 16px;
+          }
+
+          .popup-title {
+            font-size: 14px;
+            max-width: 180px;
+          }
+
+          .popup-content {
+            padding: 12px 16px 16px 16px;
+            max-height: 200px;
+          }
+
+          .popup-actions {
+            padding: 12px 16px;
+            flex-direction: column;
+            gap: 8px;
+          }
+
+          .popup-btn {
+            padding: 12px;
+            font-size: 14px;
+          }
+
+          .popup-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 4px;
+          }
+
+          .popup-value {
+            text-align: left;
+          }
+        }
+      `}</style>
+    </>
+  );
 }
