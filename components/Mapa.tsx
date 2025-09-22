@@ -17,6 +17,8 @@ import {
 } from "@/lib/const/layers";
 import { useAuth } from "@/hooks/useAuth";
 import Overlay from "ol/Overlay";
+import { toast } from "sonner";
+import { FeatureValues } from "@/lib/types/featureValues";
 
 export default function Mapa() {
   const mapRef = useRef<HTMLDivElement | null>(null);
@@ -33,6 +35,8 @@ export default function Mapa() {
   const lon = useMapStore((s) => s.lon);
   const lat = useMapStore((s) => s.lat);
 
+  const setUser = useMapStore((s) => s.setUser);
+
   const { user } = useAuth();
 
   // Función para cerrar popup
@@ -42,49 +46,66 @@ export default function Mapa() {
     popupElement.classList.add("hidden");
   };
 
-  // Función para manejar la modificación
-  const handleModificar = (featureId: string, featureData: any) => {
-    console.log("Modificar feature:", featureId, featureData);
-    // Aquí puedes agregar tu lógica de modificación
-    // Por ejemplo, abrir un modal de edición
-    setModalOpen(true);
-    // O navegar a una página de edición
-    // router.push(`/editar/${featureId}`);
-  };
-
   // Función para manejar la eliminación
-  const handleEliminar = (featureId: string, featureName: string) => {
-    const confirmDelete = window.confirm(
-      `¿Estás seguro de que deseas eliminar "${
-        featureName || "este elemento"
-      }"?`
-    );
+  const handleEliminar = async (featureId: string, featureName: string) => {
+    try {
+      const map = useMapStore.getState().map; // 👈 siempre el valor actualizado
+      if (!featureId || featureId === "unknown")
+        return toast.error("Este dato no se puede eliminar");
 
-    if (confirmDelete) {
-      console.log("Eliminar feature:", featureId);
-      // Aquí puedes agregar tu lógica de eliminación
-      // Por ejemplo, llamar a una API
-      // deleteFeature(featureId);
+      const res = await fetch(`/api/ubicaciones?id=${featureId}`, {
+        method: "DELETE",
+      });
 
-      // Cerrar el popup después de eliminar
-      const popupElement = document.getElementById("popup") as HTMLElement;
-      const popupOverlay = map
-        ?.getAllOverlays()
-        .find((overlay) => overlay.getElement() === popupElement);
-      if (popupOverlay) {
-        closePopup(popupElement, popupOverlay);
+      const result = await res.json();
+
+      if (!res.ok) throw new Error(result.error || "Error al eliminar");
+
+      const user = useMapStore.getState().user;
+      const vectorLayer = await fetchUbicacionesDelEstudiante(user!);
+
+      // Agregar la capa al mapa
+      map.addLayer(vectorLayer);
+
+      const layers = useMapStore.getState().layers;
+      // Validar si ya existe una layer similar, eliminarla para evitar duplicados
+      const existingIndex = layers.findIndex(
+        (l) => l.id === "ubicacion_estudiante"
+      );
+      if (existingIndex !== -1) {
+        const existingLayer = layers[existingIndex].layer;
+        map.removeLayer(existingLayer);
+        layers.splice(existingIndex, 1); // Eliminar del estado
       }
+
+      layers.push({
+        id: "ubicacion_estudiante",
+        title: "Mi Ubicación",
+        visible: true,
+        opacity: 1,
+        layer: vectorLayer,
+      });
+
+      const popupElement = document.getElementById("popup") as HTMLElement;
+
+      const popupOverlay = map.getOverlayById("popup_overlay") as Overlay;
+      closePopup(popupElement, popupOverlay);
+
+      return result;
+    } catch (err) {
+      console.error("Error eliminando ubicación:", err);
+      throw err;
     }
   };
 
   // Función para crear contenido del popup mejorado
   const createPopupContent = (
-    values: any,
+    values: FeatureValues,
     popupElement: HTMLElement,
     popupOverlay: Overlay
   ) => {
     const featureId = values.id || values.gid || values.objectid || "unknown";
-    const featureName = values.nombre || "Región Seleccionada";
+    const featureName = (values.nombre as string) || "Región Seleccionada";
 
     return `
       <div class="popup-container">
@@ -131,18 +152,6 @@ export default function Mapa() {
         <!-- Botones de acción -->
         <div class="popup-actions">
           <button 
-            class="popup-btn popup-btn-edit" 
-            onclick="window.mapInstance?.handleModificar('${featureId}', ${JSON.stringify(
-      values
-    ).replace(/"/g, "&quot;")})"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-              <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-            </svg>
-            Modificar
-          </button>
-          <button 
             class="popup-btn popup-btn-delete" 
             onclick="window.mapInstance?.handleEliminar('${featureId}', '${featureName.replace(
       /'/g,
@@ -179,9 +188,10 @@ export default function Mapa() {
     setMap(map);
 
     // Exponer funciones al window para que puedan ser llamadas desde el HTML
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (window as any).mapInstance = {
-      handleModificar,
-      handleEliminar,
+      handleEliminar: (featureId: string, featureName: string) =>
+        handleEliminar(featureId, featureName),
     };
 
     setLayers([
@@ -204,6 +214,7 @@ export default function Mapa() {
     // Crear overlay para popup
     const popupElement = document.getElementById("popup") as HTMLElement;
     const popupOverlay = new Overlay({
+      id: "popup_overlay",
       element: popupElement,
       positioning: "bottom-center",
       stopEvent: true,
@@ -343,6 +354,7 @@ export default function Mapa() {
 
     return () => {
       // Limpiar referencias del window
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       delete (window as any).mapInstance;
       map.setTarget(undefined);
     };
@@ -383,6 +395,12 @@ export default function Mapa() {
 
     loadUbicaciones();
   }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      setUser(user); // 👈 guardás el user apenas esté disponible
+    }
+  }, [user, setUser]);
 
   return (
     <>

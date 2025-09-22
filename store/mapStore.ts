@@ -1,3 +1,4 @@
+import { User } from "@supabase/supabase-js";
 import { create } from "zustand";
 
 export interface LayerData {
@@ -17,6 +18,7 @@ interface MapState {
   lat: number | null;
   checkUbicacion: boolean;
   modalOpen: boolean;
+  user: User | null;
 
   setMap: (map: any) => void;
   setLayers: (layers: LayerData[]) => void;
@@ -27,6 +29,7 @@ interface MapState {
   setCoordinate: (lon: number | null, lat: number | null) => void;
   setCheckUbicacion: (check: boolean) => void;
   setModalOpen: (open: boolean) => void;
+  setUser: (user: User | null) => void;
 }
 
 export const useMapStore = create<MapState>((set, get) => ({
@@ -38,6 +41,7 @@ export const useMapStore = create<MapState>((set, get) => ({
   lat: null,
   checkUbicacion: false,
   modalOpen: false,
+  user: null,
 
   setMap: (map) => set({ map }),
   setLayers: (layers) => set({ layers }),
@@ -74,4 +78,5 @@ export const useMapStore = create<MapState>((set, get) => ({
       set({ modalOpen: false });
     }
   },
+  setUser: (user) => set({ user }),
 }));

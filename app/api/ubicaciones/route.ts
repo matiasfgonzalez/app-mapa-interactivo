@@ -111,3 +111,35 @@ export async function PATCH(req: Request) {
     );
   }
 }
+
+export async function DELETE(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json(
+        { success: false, error: "Falta el id" },
+        { status: 400 }
+      );
+    }
+
+    const { error } = await supabase
+      .from("ubicacionesdeestudiantes") // 👈 mismo nombre que en GET/POST
+      .delete()
+      .eq("id", id);
+
+    if (error) throw error;
+
+    return NextResponse.json({
+      success: true,
+      message: "Registro eliminado correctamente",
+    });
+  } catch (err) {
+    console.error("Error interno del servidor - DELETE:", err);
+    return NextResponse.json(
+      { success: false, error: "Error interno del servidor - DELETE" },
+      { status: 500 }
+    );
+  }
+}
