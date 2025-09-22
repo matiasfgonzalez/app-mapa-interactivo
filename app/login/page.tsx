@@ -109,13 +109,6 @@ export default async function LoginPage() {
           </div>
         </div>
       </div>
-
-      {/* Footer */}
-      <div className="absolute bottom-4 left-4 right-4 text-center">
-        <p className="text-sm text-gray-500">
-          © 2025 CEREGEO. Todos los derechos reservados.
-        </p>
-      </div>
     </div>
   );
 }
