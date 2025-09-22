@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import GoogleLoginButton from "./GoogleLoginButton";
 import { MapPin } from "lucide-react";
+import Link from "next/link";
 
 export default async function LoginPage() {
   const supabase = await createClient();
@@ -35,17 +36,17 @@ export default async function LoginPage() {
 
             {/* Contenido descriptivo */}
             <div className="space-y-6">
-              <h2 className="text-4xl font-bold leading-tight">
+              <h2 className="text-4xl font-bold leading-tight text-center">
                 Accede al Centro Regional de Geomática
               </h2>
-              <p className="text-xl text-blue-100 text-justify">
-                El CEREGeo-FCyT/UADER funciona en el marco del Centro de
-                Investigaciones Científicas y Transferencia de Tecnología a la
-                Producción de CONICET ( CICYTTP – CONICET), Matteri y España
-                s/n, CP E3105BWA. Diamante Entre Ríos, Argentina. Tel/Fax:
-                054-0343-4983086/87 Interno 132. y también de la FCyT – Sede Oro
-                Verde
-              </p>
+
+              <Link
+                href="/"
+                className="text-black flex items-center justify-center space-x-2 text-sm font-medium bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full px-4 py-2 w-max mx-auto shadow-md"
+              >
+                <MapPin className="w-4 h-4 " />
+                <span>Visita nuestro sitio web</span>
+              </Link>
             </div>
           </div>
         </div>

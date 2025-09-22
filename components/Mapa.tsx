@@ -91,6 +91,7 @@ export default function Mapa() {
       const popupOverlay = map.getOverlayById("popup_overlay") as Overlay;
       closePopup(popupElement, popupOverlay);
 
+      toast.success(`Ubicación eliminada correctamente`);
       return result;
     } catch (err) {
       console.error("Error eliminando ubicación:", err);

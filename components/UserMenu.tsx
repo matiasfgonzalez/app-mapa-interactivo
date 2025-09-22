@@ -55,7 +55,7 @@ export default function UserMenu({ user, loading }: Readonly<UserMenuProps>) {
     return (
       <button
         onClick={handleLogin}
-        className="flex items-center space-x-1 sm:space-x-2 px-3 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors"
+        className="cursor-pointer flex items-center space-x-1 sm:space-x-2 px-3 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors"
       >
         <UserIcon size={16} className="sm:w-[18px] sm:h-[18px]" />
         <span className="hidden sm:block text-sm font-medium">

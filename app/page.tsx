@@ -24,6 +24,7 @@ import UserMenu from "@/components/UserMenu";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import LocationModal from "@/components/modals/LocationModal";
+import { excludeKeys } from "@/lib/types/excludeKeys";
 
 export default function HomePage() {
   const { user, loading } = useAuth();
@@ -529,9 +530,9 @@ export default function HomePage() {
                   <pre className="text-wrap text-xs bg-gray-100 p-2 rounded">
                     {/* Creamos una copia del objeto para no modificar el original */}
                     {JSON.stringify(
-                      // Destructuring para copiar el objeto y excluir 'geometry'
-                      { ...featureValues, geometry: undefined },
-                      (key, value) => (key === "geometry" ? undefined : value),
+                      featureValues,
+                      (key, value) =>
+                        excludeKeys.has(key) ? undefined : value,
                       2
                     )}
                   </pre>
