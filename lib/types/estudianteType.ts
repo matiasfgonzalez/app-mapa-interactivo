@@ -9,6 +9,7 @@ export interface EstudianteType {
   profesion: string;
   lat: number;
   lon: number;
+  avatar_url: string | null;
   created_at: string;
   created_by: string;
   updated_at: string;

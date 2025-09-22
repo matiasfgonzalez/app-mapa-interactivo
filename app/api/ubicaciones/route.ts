@@ -77,6 +77,7 @@ export async function POST(req: Request) {
           profesion,
           lat,
           lon,
+          avatar_url: user.user_metadata?.avatar_url ?? null,
           created_by: user.id,
         },
       ])

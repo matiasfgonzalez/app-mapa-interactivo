@@ -93,30 +93,33 @@ export const fetchUbicacionesDelEstudiante = async (user: User) => {
   if (result.success) {
     const featuresData = result.data;
 
-    const canvas = await createCircleIcon(
-      user.user_metadata?.avatar_url || "/default-avatar.png",
-      50
-    );
-
     // Crear features a partir de los datos
-    const features = featuresData.map((u: EstudianteType) => {
-      const feature = new Feature({
-        geometry: new Point(fromLonLat([u.lon, u.lat])),
-        ...u,
-      });
+    const features = await Promise.all(
+      featuresData.map(async (u: EstudianteType) => {
+        // 👇 Usar la imagen de cada estudiante o fallback
+        const canvas = await createCircleIcon(
+          u.avatar_url || "/default-avatar.png",
+          50
+        );
 
-      feature.setStyle(
-        new Style({
-          image: new Icon({
-            img: canvas,
-            scale: 0.7,
-            anchor: [0.5, 1],
-          }),
-        })
-      );
+        const feature = new Feature({
+          geometry: new Point(fromLonLat([u.lon, u.lat])),
+          ...u,
+        });
 
-      return feature;
-    });
+        feature.setStyle(
+          new Style({
+            image: new Icon({
+              img: canvas,
+              scale: 0.7,
+              anchor: [0.5, 1],
+            }),
+          })
+        );
+
+        return feature;
+      })
+    );
 
     // Crear capa vectorial
     const vectorLayer = new VectorLayer({

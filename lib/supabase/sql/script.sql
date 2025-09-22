@@ -9,6 +9,7 @@ create table public.ubicacionesDeEstudiantes (
     profesion text not null,
     lat numeric not null,
     lon numeric not null,
+    avatar_url text,
     created_at timestamptz default now(),
     created_by uuid references auth.users(id) not null,
     updated_at timestamptz,
