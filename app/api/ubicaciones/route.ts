@@ -1,9 +1,7 @@
 "use server";
 
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/client";
-
-const supabase = createClient();
+import { createClient } from "@/lib/supabase/server";
 
 // Obtener la ubicación de un usuario por user_id
 export async function GET(req: Request) {
@@ -11,19 +9,24 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const user_id = searchParams.get("user_id");
 
-    if (!user_id)
-      return NextResponse.json(
-        { success: false, error: "Falta el user_id" },
-        { status: 400 }
-      );
+    const supabase = await createClient();
 
+    if (user_id) {
+      const { data, error } = await supabase
+        .from("ubicacionesdeestudiantes")
+        .select("*")
+        .eq("user_id", user_id);
+
+      if (error) throw error;
+      return NextResponse.json({ success: true, data });
+    }
+
+    // ✅ Si no pasás user_id → trae todas
     const { data, error } = await supabase
       .from("ubicacionesdeestudiantes")
-      .select("*")
-      .eq("user_id", user_id);
+      .select("*");
 
     if (error) throw error;
-
     return NextResponse.json({ success: true, data });
   } catch (err) {
     console.error(
@@ -42,8 +45,9 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    const supabase = await createClient();
+
     const {
-      user_id,
       localidad,
       facultad,
       carrera,
@@ -54,11 +58,17 @@ export async function POST(req: Request) {
       nombre_completo,
     } = await req.json();
 
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) throw new Error("No hay usuario logueado");
+
     const { data, error } = await supabase
       .from("ubicacionesdeestudiantes")
       .insert([
         {
-          user_id,
+          user_id: user.id,
           email,
           nombre_completo,
           localidad,
@@ -67,9 +77,10 @@ export async function POST(req: Request) {
           profesion,
           lat,
           lon,
-          created_by: user_id,
+          created_by: user.id,
         },
-      ]);
+      ])
+      .select();
 
     if (error) throw error;
     return NextResponse.json({ success: true, data });
@@ -84,11 +95,12 @@ export async function POST(req: Request) {
 
 export async function PATCH(req: Request) {
   try {
+    const supabase = await createClient();
     const { id, user_id, localidad, facultad, carrera, profesion, lat, lon } =
       await req.json();
 
     const { data, error } = await supabase
-      .from("ubicacionesDeEstudiantes")
+      .from("ubicacionesdeestudiantes")
       .update({
         localidad,
         facultad,
@@ -99,7 +111,8 @@ export async function PATCH(req: Request) {
         updated_at: new Date().toISOString(),
         updated_by: user_id,
       })
-      .eq("id", id);
+      .eq("id", id)
+      .select();
 
     if (error) throw error;
     return NextResponse.json({ success: true, data });
@@ -114,6 +127,7 @@ export async function PATCH(req: Request) {
 
 export async function DELETE(req: Request) {
   try {
+    const supabase = await createClient();
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
 
