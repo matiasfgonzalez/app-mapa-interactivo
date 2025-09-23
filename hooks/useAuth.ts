@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { User } from "@supabase/supabase-js";
+import { upsertUserFromAuth } from "@/lib/supabase/users";
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -16,6 +17,7 @@ export function useAuth() {
         data: { user },
       } = await supabase.auth.getUser();
       setUser(user);
+      await upsertUserFromAuth(user);
       setLoading(false);
     };
 
