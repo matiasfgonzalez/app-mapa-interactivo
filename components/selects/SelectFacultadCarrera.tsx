@@ -23,7 +23,7 @@ export default function SelectFacultadCarrera({
     { id: string; nombre: string }[]
   >([]);
   const [carreras, setCarreras] = useState<{ nombre: string }[]>([]);
-  const [selectedFacultad, setSelectedFacultad] = useState<string>("");
+  const [selectedFacultad, setSelectedFacultad] = useState<string>("FCyT");
 
   // Obtener facultades al montar
   useEffect(() => {
@@ -45,7 +45,7 @@ export default function SelectFacultadCarrera({
     <div className="space-y-4">
       <div>
         <Label>Facultad</Label>
-        <Select onValueChange={setSelectedFacultad}>
+        <Select onValueChange={setSelectedFacultad} value={selectedFacultad}>
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Selecciona una facultad" />
           </SelectTrigger>
