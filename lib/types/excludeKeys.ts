@@ -9,4 +9,5 @@ export const excludeKeys = new Set([
   "created_by",
   "updated_at",
   "updated_by",
+  "avatar_url",
 ]);

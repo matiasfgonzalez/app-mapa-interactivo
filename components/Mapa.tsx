@@ -19,6 +19,7 @@ import { useAuth } from "@/hooks/useAuth";
 import Overlay from "ol/Overlay";
 import { toast } from "sonner";
 import { FeatureValues } from "@/lib/types/featureValues";
+import { excludeKeys } from "@/lib/types/excludeKeys";
 
 export default function Mapa() {
   const mapRef = useRef<HTMLDivElement | null>(null);
@@ -58,6 +59,11 @@ export default function Mapa() {
       });
 
       const result = await res.json();
+
+      if (res.status === 403) {
+        toast.error(result.error || "No autorizado");
+        return;
+      }
 
       if (!res.ok) throw new Error(result.error || "Error al eliminar");
 
@@ -124,19 +130,7 @@ export default function Mapa() {
         <!-- Contenido con scroll -->
         <div class="popup-content">
           ${Object.entries(values)
-            .filter(
-              ([key]) =>
-                key !== "geometry" &&
-                key !== "nombre" &&
-                key !== "id" &&
-                key !== "gid" &&
-                key !== "objectid" &&
-                key !== "user_id" &&
-                key !== "created_at" &&
-                key !== "created_by" &&
-                key !== "updated_at" &&
-                key !== "updated_by"
-            )
+            .filter(([key]) => !excludeKeys.has(key))
             .map(
               ([key, val]) => `
               <div class="popup-item">

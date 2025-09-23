@@ -134,11 +134,45 @@ export async function DELETE(req: Request) {
 
     if (!id) {
       return NextResponse.json(
-        { success: false, error: "Falta el id" },
+        { success: false, error: "Falta el id de la ubicación" },
         { status: 400 }
       );
     }
 
+    // Obtener el usuario autenticado
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: "No hay usuario logueado" },
+        { status: 401 }
+      );
+    }
+
+    // Verificar que el registro pertenece al usuario
+    const { data: record, error: fetchError } = await supabase
+      .from("ubicacionesdeestudiantes")
+      .select("user_id")
+      .eq("id", id)
+      .single();
+
+    if (fetchError || !record) {
+      return NextResponse.json(
+        { success: false, error: "Registro no encontrado" },
+        { status: 404 }
+      );
+    }
+
+    if (record.user_id !== user.id) {
+      return NextResponse.json(
+        { success: false, error: "No autorizado para eliminar este registro" },
+        { status: 403 }
+      );
+    }
+
+    // Solo el dueño puede eliminar
     const { error } = await supabase
       .from("ubicacionesdeestudiantes") // 👈 mismo nombre que en GET/POST
       .delete()
