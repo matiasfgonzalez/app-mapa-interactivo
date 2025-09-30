@@ -15,12 +15,16 @@ import { SelectLocalidad } from "../selects/SelectLocalidad";
 import SelectFacultadCarrera from "../selects/SelectFacultadCarrera";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchUbicacionesDelEstudiante } from "@/lib/const/layers";
+import SelectPais from "../selects/SelectPais";
+import SelectTipoUniversitario from "../selects/SelectTipoUniversitario";
 
 export default function LocationModal() {
   const { modalOpen, setModalOpen, lon, lat, map, layers } = useMapStore();
   const user = useAuth();
 
   const [localidad, setLocalidad] = useState("");
+  const [pais, setPais] = useState("");
+  const [tipoUni, setTipoUni] = useState("");
   const [facultad, setFacultad] = useState("");
   const [carrera, setCarrera] = useState("");
   const [profesion, setProfesion] = useState("");
@@ -94,17 +98,23 @@ export default function LocationModal() {
             </p>
           </div>
 
+          <SelectPais value={pais} onChange={setPais} />
+
           {/* Localidad dinámica */}
-          <SelectLocalidad value={localidad} onChange={setLocalidad} />
+          {pais === "Argentina" && (
+            <SelectLocalidad value={localidad} onChange={setLocalidad} />
+          )}
 
           <SelectFacultadCarrera
             setFacultad={setFacultad}
             setCarrera={setCarrera}
           />
 
+          <SelectTipoUniversitario value={tipoUni} onChange={setTipoUni} />
+
           {/* Profesión actual */}
           <div className="space-y-1">
-            <Label htmlFor="profesion">Profesión actual</Label>
+            <Label htmlFor="profesion">Actualmente me desempeño en:</Label>
             <Input
               id="profesion"
               placeholder="Ej: Desarrollador de software"
