@@ -25,6 +25,7 @@ export default function LocationModal() {
   const [localidad, setLocalidad] = useState("");
   const [pais, setPais] = useState("");
   const [tipoUni, setTipoUni] = useState("");
+  const [tipoUniOtro, setTipoUniOtro] = useState("");
   const [facultad, setFacultad] = useState("");
   const [carrera, setCarrera] = useState("");
   const [profesion, setProfesion] = useState("");
@@ -111,6 +112,18 @@ export default function LocationModal() {
           />
 
           <SelectTipoUniversitario value={tipoUni} onChange={setTipoUni} />
+
+          {tipoUni === "Otro" && (
+            <div className="space-y-1">
+              <Label htmlFor="tipo-uni">Especificar tipo:</Label>
+              <Input
+                id="tipo-uni"
+                placeholder="Ej: Investigador, Docente, etc."
+                value={tipoUniOtro}
+                onChange={(e) => setTipoUniOtro(e.target.value)}
+              />
+            </div>
+          )}
 
           {/* Profesión actual */}
           <div className="space-y-1">
