@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useMapStore } from "@/store/mapStore";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { SelectLocalidad } from "../selects/SelectLocalidad";
 import SelectFacultadCarrera from "../selects/SelectFacultadCarrera";
 import { useAuth } from "@/hooks/useAuth";
@@ -37,7 +37,7 @@ export default function LocationModal() {
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     if (!user) return;
     setLoading(true);
 
@@ -67,7 +67,7 @@ export default function LocationModal() {
     }
 
     setLoading(false);
-  };
+  }, [user, lat, lon, formData, updateStudentLocationLayer, setModalOpen]);
 
   return (
     <Dialog open={modalOpen} onOpenChange={setModalOpen}>
