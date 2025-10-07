@@ -22,14 +22,20 @@ export default function LocationModal() {
   const { modalOpen, setModalOpen, lon, lat, map, layers } = useMapStore();
   const user = useAuth();
 
-  const [localidad, setLocalidad] = useState("");
-  const [pais, setPais] = useState("");
-  const [tipoUni, setTipoUni] = useState("");
-  const [tipoUniOtro, setTipoUniOtro] = useState("");
-  const [facultad, setFacultad] = useState("");
-  const [carrera, setCarrera] = useState("");
-  const [profesion, setProfesion] = useState("");
+  const [formData, setFormData] = useState({
+    localidad: "",
+    pais: "",
+    tipoUni: "",
+    tipoUniOtro: "",
+    facultad: "",
+    carrera: "",
+    profesion: "",
+  });
   const [loading, setLoading] = useState(false);
+
+  const updateFormData = (key: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [key]: value }));
+  };
 
   const handleSubmit = async () => {
     if (!user) return;
@@ -42,10 +48,10 @@ export default function LocationModal() {
         user_id: user.user?.id,
         email: user.user?.email,
         nombre_completo: user.user?.user_metadata.full_name,
-        localidad,
-        facultad,
-        carrera,
-        profesion,
+        localidad: formData.localidad,
+        facultad: formData.facultad,
+        carrera: formData.carrera,
+        profesion: formData.profesion,
         lat,
         lon,
       }),
@@ -99,28 +105,37 @@ export default function LocationModal() {
             </p>
           </div>
 
-          <SelectPais value={pais} onChange={setPais} />
+          <SelectPais
+            value={formData.pais}
+            onChange={(value) => updateFormData("pais", value)}
+          />
 
           {/* Localidad dinámica */}
-          {pais === "Argentina" && (
-            <SelectLocalidad value={localidad} onChange={setLocalidad} />
+          {formData.pais === "Argentina" && (
+            <SelectLocalidad
+              value={formData.localidad}
+              onChange={(value) => updateFormData("localidad", value)}
+            />
           )}
 
           <SelectFacultadCarrera
-            setFacultad={setFacultad}
-            setCarrera={setCarrera}
+            setFacultad={(value) => updateFormData("facultad", value)}
+            setCarrera={(value) => updateFormData("carrera", value)}
           />
 
-          <SelectTipoUniversitario value={tipoUni} onChange={setTipoUni} />
+          <SelectTipoUniversitario
+            value={formData.tipoUni}
+            onChange={(value) => updateFormData("tipoUni", value)}
+          />
 
-          {tipoUni === "Otro" && (
+          {formData.tipoUni === "Otro" && (
             <div className="space-y-1">
               <Label htmlFor="tipo-uni">Especificar tipo:</Label>
               <Input
                 id="tipo-uni"
                 placeholder="Ej: Investigador, Docente, etc."
-                value={tipoUniOtro}
-                onChange={(e) => setTipoUniOtro(e.target.value)}
+                value={formData.tipoUniOtro}
+                onChange={(e) => updateFormData("tipoUniOtro", e.target.value)}
               />
             </div>
           )}
@@ -131,8 +146,8 @@ export default function LocationModal() {
             <Input
               id="profesion"
               placeholder="Ej: Desarrollador de software"
-              value={profesion}
-              onChange={(e) => setProfesion(e.target.value)}
+              value={formData.profesion}
+              onChange={(e) => updateFormData("profesion", e.target.value)}
             />
           </div>
 
