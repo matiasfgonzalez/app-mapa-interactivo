@@ -10,34 +10,81 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useMapStore } from "@/store/mapStore";
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { SelectLocalidad } from "../selects/SelectLocalidad";
 import SelectFacultadCarrera from "../selects/SelectFacultadCarrera";
 import { useAuth } from "@/hooks/useAuth";
 import SelectPais from "../selects/SelectPais";
 import SelectTipoUniversitario from "../selects/SelectTipoUniversitario";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+
+const schema = z
+  .object({
+    pais: z.string().min(1, "País es obligatorio"),
+    localidad: z.string().optional(),
+    tipoUni: z.string().min(1, "Tipo universitario es obligatorio"),
+    tipoUniOtro: z.string().optional(),
+    facultad: z.string().min(1, "Facultad es obligatoria"),
+    carrera: z.string().min(1, "Carrera es obligatoria"),
+    profesion: z.string().min(1, "Profesión es obligatoria"),
+  })
+  .refine(
+    (data) => {
+      if (data.pais === "Argentina") {
+        return data.localidad && data.localidad.length > 0;
+      }
+      return true;
+    },
+    {
+      message: "Localidad es obligatoria para Argentina",
+      path: ["localidad"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.tipoUni === "Otro") {
+        return data.tipoUniOtro && data.tipoUniOtro.length > 0;
+      }
+      return true;
+    },
+    {
+      message: "Especificar tipo es obligatorio",
+      path: ["tipoUniOtro"],
+    }
+  );
 
 export default function LocationModal() {
   const { modalOpen, setModalOpen, lon, lat, updateStudentLocationLayer } =
     useMapStore();
   const user = useAuth();
 
-  const [formData, setFormData] = useState({
-    localidad: "",
-    pais: "",
-    tipoUni: "",
-    tipoUniOtro: "",
-    facultad: "",
-    carrera: "",
-    profesion: "",
+  const {
+    control,
+    handleSubmit: rhfHandleSubmit,
+    formState: { errors },
+    watch,
+    setValue,
+  } = useForm({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      pais: "",
+      localidad: "",
+      tipoUni: "",
+      tipoUniOtro: "",
+      facultad: "",
+      carrera: "",
+      profesion: "",
+    },
   });
+
+  const watchedPais = watch("pais");
+  const watchedTipoUni = watch("tipoUni");
+
   const [loading, setLoading] = useState(false);
 
-  const updateFormData = (key: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const handleSubmit = useCallback(async () => {
+  const onSubmit = rhfHandleSubmit(async (data) => {
     if (!user) return;
     setLoading(true);
 
@@ -48,26 +95,26 @@ export default function LocationModal() {
         user_id: user.user?.id,
         email: user.user?.email,
         nombre_completo: user.user?.user_metadata.full_name,
-        localidad: formData.localidad,
-        facultad: formData.facultad,
-        carrera: formData.carrera,
-        profesion: formData.profesion,
+        localidad: data.localidad,
+        facultad: data.facultad,
+        carrera: data.carrera,
+        profesion: data.profesion,
         lat,
         lon,
       }),
     });
 
-    const data = await res.json();
+    const responseData = await res.json();
 
-    if (data.success) {
+    if (responseData.success) {
       await updateStudentLocationLayer(user.user!);
       setModalOpen(false);
     } else {
-      alert(data.error);
+      alert(responseData.error);
     }
 
     setLoading(false);
-  }, [user, lat, lon, formData, updateStudentLocationLayer, setModalOpen]);
+  });
 
   return (
     <Dialog open={modalOpen} onOpenChange={setModalOpen}>
@@ -76,73 +123,121 @@ export default function LocationModal() {
           <DialogTitle>Ubicación seleccionada</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
-          {/* Coordenadas */}
-          <div className="text-sm text-gray-700">
-            <p>
-              <b>Latitud:</b> {lat?.toFixed(6)}
-            </p>
-            <p>
-              <b>Longitud:</b> {lon?.toFixed(6)}
-            </p>
-          </div>
-
-          <SelectPais
-            value={formData.pais}
-            onChange={(value) => updateFormData("pais", value)}
-          />
-
-          {/* Localidad dinámica */}
-          {formData.pais === "Argentina" && (
-            <SelectLocalidad
-              value={formData.localidad}
-              onChange={(value) => updateFormData("localidad", value)}
-            />
-          )}
-
-          <SelectFacultadCarrera
-            setFacultad={(value) => updateFormData("facultad", value)}
-            setCarrera={(value) => updateFormData("carrera", value)}
-          />
-
-          <SelectTipoUniversitario
-            value={formData.tipoUni}
-            onChange={(value) => updateFormData("tipoUni", value)}
-          />
-
-          {formData.tipoUni === "Otro" && (
-            <div className="space-y-1">
-              <Label htmlFor="tipo-uni">Especificar tipo:</Label>
-              <Input
-                id="tipo-uni"
-                placeholder="Ej: Investigador, Docente, etc."
-                value={formData.tipoUniOtro}
-                onChange={(e) => updateFormData("tipoUniOtro", e.target.value)}
-              />
+        <form onSubmit={onSubmit}>
+          <div className="space-y-4">
+            {/* Coordenadas */}
+            <div className="text-sm text-gray-700">
+              <p>
+                <b>Latitud:</b> {lat?.toFixed(6)}
+              </p>
+              <p>
+                <b>Longitud:</b> {lon?.toFixed(6)}
+              </p>
             </div>
-          )}
 
-          {/* Profesión actual */}
-          <div className="space-y-1">
-            <Label htmlFor="profesion">Actualmente me desempeño en:</Label>
-            <Input
-              id="profesion"
-              placeholder="Ej: Desarrollador de software"
-              value={formData.profesion}
-              onChange={(e) => updateFormData("profesion", e.target.value)}
-            />
-          </div>
+            <div>
+              <Controller
+                name="pais"
+                control={control}
+                render={({ field }) => (
+                  <SelectPais value={field.value} onChange={field.onChange} />
+                )}
+              />
+              <p className="text-red-500 text-sm">{errors.pais?.message}</p>
+            </div>
 
-          {/* Botones */}
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => setModalOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleSubmit} disabled={loading}>
-              {loading ? "Guardando..." : "Guardar"}
-            </Button>
+            {/* Localidad dinámica */}
+            {watchedPais === "Argentina" && (
+              <div>
+                <Controller
+                  name="localidad"
+                  control={control}
+                  render={({ field }) => (
+                    <SelectLocalidad
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
+                  )}
+                />
+                <p className="text-red-500 text-sm">
+                  {errors.localidad?.message}
+                </p>
+              </div>
+            )}
+
+            <div>
+              <SelectFacultadCarrera
+                setFacultad={(value) => setValue("facultad", value)}
+                setCarrera={(value) => setValue("carrera", value)}
+              />
+              <p className="text-red-500 text-sm">{errors.facultad?.message}</p>
+              <p className="text-red-500 text-sm">{errors.carrera?.message}</p>
+            </div>
+
+            <div>
+              <Controller
+                name="tipoUni"
+                control={control}
+                render={({ field }) => (
+                  <SelectTipoUniversitario
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
+                )}
+              />
+              <p className="text-red-500 text-sm">{errors.tipoUni?.message}</p>
+            </div>
+
+            {watchedTipoUni === "Otro" && (
+              <div className="space-y-1">
+                <Label htmlFor="tipo-uni">Especificar tipo:</Label>
+                <Controller
+                  name="tipoUniOtro"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      id="tipo-uni"
+                      placeholder="Ej: Investigador, Docente, etc."
+                      {...field}
+                    />
+                  )}
+                />
+                <p className="text-red-500 text-sm">
+                  {errors.tipoUniOtro?.message}
+                </p>
+              </div>
+            )}
+
+            {/* Profesión actual */}
+            <div className="space-y-1">
+              <Label htmlFor="profesion">Actualmente me desempeño en:</Label>
+              <Controller
+                name="profesion"
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    id="profesion"
+                    placeholder="Ej: Desarrollador de software"
+                    {...field}
+                  />
+                )}
+              />
+              <p className="text-red-500 text-sm">
+                {errors.profesion?.message}
+              </p>
+            </div>
+
+            {/* Botones */}
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => setModalOpen(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={loading}>
+                {loading ? "Guardando..." : "Guardar"}
+              </Button>
+            </div>
           </div>
-        </div>
+        </form>
       </DialogContent>
     </Dialog>
   );
