@@ -14,12 +14,12 @@ import { useState } from "react";
 import { SelectLocalidad } from "../selects/SelectLocalidad";
 import SelectFacultadCarrera from "../selects/SelectFacultadCarrera";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchUbicacionesDelEstudiante } from "@/lib/const/layers";
 import SelectPais from "../selects/SelectPais";
 import SelectTipoUniversitario from "../selects/SelectTipoUniversitario";
 
 export default function LocationModal() {
-  const { modalOpen, setModalOpen, lon, lat, map, layers } = useMapStore();
+  const { modalOpen, setModalOpen, lon, lat, updateStudentLocationLayer } =
+    useMapStore();
   const user = useAuth();
 
   const [formData, setFormData] = useState({
@@ -59,32 +59,14 @@ export default function LocationModal() {
 
     const data = await res.json();
 
-    const vectorLayer = await fetchUbicacionesDelEstudiante(user.user!);
-
-    // Agregar la capa al mapa
-    map.addLayer(vectorLayer);
-
-    // Validar si ya existe una layer similar, eliminarla para evitar duplicados
-    const existingIndex = layers.findIndex(
-      (l) => l.id === "ubicacion_estudiante"
-    );
-    if (existingIndex !== -1) {
-      const existingLayer = layers[existingIndex].layer;
-      map.removeLayer(existingLayer);
-      layers.splice(existingIndex, 1); // Eliminar del estado
+    if (data.success) {
+      await updateStudentLocationLayer(user.user!);
+      setModalOpen(false);
+    } else {
+      alert(data.error);
     }
 
-    layers.push({
-      id: "ubicacion_estudiante",
-      title: "Mi Ubicación",
-      visible: true,
-      opacity: 1,
-      layer: vectorLayer,
-    });
-
     setLoading(false);
-    if (data.success) setModalOpen(false);
-    else alert(data.error);
   };
 
   return (
