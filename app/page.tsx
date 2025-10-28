@@ -48,6 +48,11 @@ export default function HomePage() {
   const lat = useMapStore((s) => s.lat);
   const checkUbicacion = useMapStore((s) => s.checkUbicacion);
   const setCheckUbicacion = useMapStore((s) => s.setCheckUbicacion);
+  const updateNearbyStudentsLayer = useMapStore(
+    (s) => s.updateNearbyStudentsLayer
+  );
+
+  const [nearbyResults, setNearbyResults] = useState<any[]>([]);
 
   // Detectar si es dispositivo móvil
   useEffect(() => {
@@ -110,6 +115,7 @@ export default function HomePage() {
       !ubicacionSeleccionada.coord_y
     ) {
       console.error("No se encontró una ubicación válida.");
+      alert("Por favor, selecciona una ubicación en el mapa primero.");
       return;
     }
 
@@ -117,10 +123,28 @@ export default function HomePage() {
     const x = parseFloat(ubicacionSeleccionada.coord_x);
     const y = parseFloat(ubicacionSeleccionada.coord_y);
 
-    // Llamar a la función buscarCercanos con las coordenadas
-    const resultados = await buscarCercanos(y, x);
+    try {
+      // Llamar a la función buscarCercanos con las coordenadas
+      const resultados = await buscarCercanos(y, x);
 
-    //  Mostrar los resultados en el mapa para visualizarlos
+      console.log("Resultados encontrados:", resultados);
+
+      if (resultados && resultados.length > 0) {
+        // Guardar resultados en el estado
+        setNearbyResults(resultados);
+
+        // Actualizar la capa en el mapa
+        await updateNearbyStudentsLayer(resultados);
+
+        alert(`Se encontraron ${resultados.length} estudiante(s) cercano(s)`);
+      } else {
+        alert("No se encontraron estudiantes cercanos a esta ubicación.");
+        setNearbyResults([]);
+      }
+    } catch (error) {
+      console.error("Error al buscar estudiantes cercanos:", error);
+      alert("Ocurrió un error al buscar estudiantes cercanos.");
+    }
   };
 
   return (
@@ -376,9 +400,32 @@ export default function HomePage() {
               {activeSection === "search" && (
                 <>
                   <div className="space-y-3 sm:space-y-4">
-                    <Button className="" onClick={buscarEstudiantesCercanos}>
-                      Buscar estudiantes cercanos
-                    </Button>
+                    <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                      <h3 className="font-medium text-gray-900 text-sm sm:text-base mb-2">
+                        Búsqueda de Estudiantes Cercanos
+                      </h3>
+                      <p className="text-xs text-gray-600 mb-3">
+                        Selecciona un punto en el mapa y haz clic en el botón
+                        para encontrar estudiantes cercanos.
+                      </p>
+                      <Button
+                        className="w-full"
+                        onClick={buscarEstudiantesCercanos}
+                        disabled={
+                          !featureValues ||
+                          !featureValues.coord_x ||
+                          !featureValues.coord_y
+                        }
+                      >
+                        <Search className="mr-2 h-4 w-4" />
+                        Buscar estudiantes cercanos
+                      </Button>
+                      {(!featureValues || !featureValues.coord_x) && (
+                        <p className="text-xs text-orange-600 mt-2">
+                          ⚠️ Selecciona una ubicación en el mapa primero
+                        </p>
+                      )}
+                    </div>
                   </div>
                   <div className="space-y-3 sm:space-y-4">
                     <h3 className="font-medium text-gray-900 text-sm sm:text-base">
@@ -555,6 +602,45 @@ export default function HomePage() {
 
             {/* Properties Panel */}
             <div className="flex-1 p-3 sm:p-4 overflow-y-auto space-y-4 sm:space-y-6">
+              {/* Resultados de estudiantes cercanos */}
+              {nearbyResults.length > 0 && (
+                <div className="border border-blue-200 rounded-lg p-4 bg-blue-50">
+                  <h3 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
+                    <MapPin className="h-5 w-5" />
+                    Estudiantes Cercanos ({nearbyResults.length})
+                  </h3>
+                  <div className="space-y-2">
+                    {nearbyResults.map((estudiante, idx) => (
+                      <div
+                        key={estudiante.id || idx}
+                        className="bg-white p-3 rounded border border-blue-100 shadow-sm hover:shadow-md transition-shadow"
+                      >
+                        <p className="font-medium text-gray-900">
+                          {estudiante.nombre_completo}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Distancia: {(estudiante.distancia / 1000).toFixed(2)}{" "}
+                          km
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Lat: {estudiante.lat.toFixed(6)}, Lon:{" "}
+                          {estudiante.lon.toFixed(6)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => {
+                      setNearbyResults([]);
+                      // Opcionalmente, remover la capa del mapa
+                    }}
+                    className="mt-3 w-full text-sm text-blue-600 hover:text-blue-800 underline"
+                  >
+                    Limpiar resultados
+                  </button>
+                </div>
+              )}
+
               <p className="text-gray-500">
                 Haz clic en una región para ver resultados
               </p>

@@ -139,3 +139,53 @@ export const ubicacionDelEstudianteLayer = new VectorLayer({
   source: new VectorSource(),
   style: dynamicStyle,
 });
+
+// Función para crear una capa con estudiantes cercanos
+export const createNearbyStudentsLayer = async (
+  nearbyStudents: Array<{
+    id: string;
+    nombre_completo: string;
+    lat: number;
+    lon: number;
+    distancia: number;
+  }>
+) => {
+  const features = await Promise.all(
+    nearbyStudents.map(async (estudiante) => {
+      // Crear un icono distintivo para estudiantes cercanos (naranja/amarillo)
+      const canvas = await createCircleIcon(
+        "/default-avatar.png",
+        50,
+        "#ff9800"
+      );
+
+      const feature = new Feature({
+        geometry: new Point(fromLonLat([estudiante.lon, estudiante.lat])),
+        nombre: estudiante.nombre_completo,
+        distancia: estudiante.distancia,
+        tipo: "estudiante_cercano",
+        id: estudiante.id,
+      });
+
+      feature.setStyle(
+        new Style({
+          image: new Icon({
+            img: canvas,
+            scale: 0.8,
+            anchor: [0.5, 1],
+          }),
+        })
+      );
+
+      return feature;
+    })
+  );
+
+  const vectorLayer = new VectorLayer({
+    source: new VectorSource({
+      features,
+    }),
+  });
+
+  return vectorLayer;
+};

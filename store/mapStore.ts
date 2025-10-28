@@ -1,6 +1,9 @@
 import { User } from "@supabase/supabase-js";
 import { create } from "zustand";
-import { fetchUbicacionesDelEstudiante } from "@/lib/const/layers";
+import {
+  fetchUbicacionesDelEstudiante,
+  createNearbyStudentsLayer,
+} from "@/lib/const/layers";
 
 export interface LayerData {
   id: string;
@@ -32,6 +35,7 @@ interface MapState {
   setModalOpen: (open: boolean) => void;
   setUser: (user: User | null) => void;
   updateStudentLocationLayer: (user: User) => Promise<void>;
+  updateNearbyStudentsLayer: (nearbyStudents: any[]) => Promise<void>;
 }
 
 export const useMapStore = create<MapState>((set, get) => ({
@@ -103,6 +107,37 @@ export const useMapStore = create<MapState>((set, get) => ({
       layers.push({
         id: "ubicacion_estudiante",
         title: "Mi Ubicación",
+        visible: true,
+        opacity: 1,
+        layer: vectorLayer,
+      });
+
+      // Actualizar el estado
+      set({ layers: [...layers] });
+    }
+  },
+  updateNearbyStudentsLayer: async (nearbyStudents) => {
+    const { map, layers } = get();
+    if (!map || !nearbyStudents || nearbyStudents.length === 0) return;
+
+    const vectorLayer = await createNearbyStudentsLayer(nearbyStudents);
+    if (vectorLayer) {
+      map.addLayer(vectorLayer);
+
+      // Remover capa existente si hay
+      const existingIndex = layers.findIndex(
+        (l) => l.id === "estudiantes_cercanos"
+      );
+      if (existingIndex !== -1) {
+        const existingLayer = layers[existingIndex].layer;
+        map.removeLayer(existingLayer);
+        layers.splice(existingIndex, 1);
+      }
+
+      // Agregar nueva capa
+      layers.push({
+        id: "estudiantes_cercanos",
+        title: `Estudiantes Cercanos (${nearbyStudents.length})`,
         visible: true,
         opacity: 1,
         layer: vectorLayer,

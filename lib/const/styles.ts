@@ -101,7 +101,11 @@ export const styleUniFcyt = (feature: FeatureLike): Style => {
   });
 };
 
-export const createCircleIcon = async (imgUrl: string, size = 50) => {
+export const createCircleIcon = async (
+  imgUrl: string,
+  size = 50,
+  borderColor = "#4CAF50"
+) => {
   const canvas = document.createElement("canvas");
   canvas.width = size;
   canvas.height = size;
@@ -112,11 +116,20 @@ export const createCircleIcon = async (imgUrl: string, size = 50) => {
     img.onload = () => {
       ctx.clearRect(0, 0, size, size);
       ctx.save();
+
+      // Dibujar borde de color
       ctx.beginPath();
       ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2, true);
       ctx.closePath();
+      ctx.fillStyle = borderColor;
+      ctx.fill();
+
+      // Clip para la imagen
+      ctx.beginPath();
+      ctx.arc(size / 2, size / 2, size / 2 - 3, 0, Math.PI * 2, true);
+      ctx.closePath();
       ctx.clip();
-      ctx.drawImage(img, 0, 0, size, size);
+      ctx.drawImage(img, 3, 3, size - 6, size - 6);
       ctx.restore();
       resolve(canvas);
     };
