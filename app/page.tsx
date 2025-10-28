@@ -27,6 +27,7 @@ import LocationModal from "@/components/modals/LocationModal";
 import { excludeKeys } from "@/lib/types/excludeKeys";
 import { Button } from "@/components/ui/button";
 import { buscarCercanos } from "@/lib/utils/buscarCercanos";
+import { toast } from "sonner";
 
 export default function HomePage() {
   const { user, loading } = useAuth();
@@ -115,7 +116,10 @@ export default function HomePage() {
       !ubicacionSeleccionada.coord_y
     ) {
       console.error("No se encontró una ubicación válida.");
-      alert("Por favor, selecciona una ubicación en el mapa primero.");
+      toast.error("Ubicación no seleccionada", {
+        description: "Por favor, selecciona una ubicación en el mapa primero.",
+        duration: 4000,
+      });
       return;
     }
 
@@ -123,11 +127,17 @@ export default function HomePage() {
     const x = parseFloat(ubicacionSeleccionada.coord_x);
     const y = parseFloat(ubicacionSeleccionada.coord_y);
 
+    // Mostrar loading toast
+    const loadingToast = toast.loading("Buscando estudiantes cercanos...");
+
     try {
       // Llamar a la función buscarCercanos con las coordenadas
       const resultados = await buscarCercanos(y, x);
 
       console.log("Resultados encontrados:", resultados);
+
+      // Dismiss loading toast
+      toast.dismiss(loadingToast);
 
       if (resultados && resultados.length > 0) {
         // Guardar resultados en el estado
@@ -136,15 +146,47 @@ export default function HomePage() {
         // Actualizar la capa en el mapa
         await updateNearbyStudentsLayer(resultados);
 
-        alert(`Se encontraron ${resultados.length} estudiante(s) cercano(s)`);
+        toast.success("¡Búsqueda completada!", {
+          description: `Se encontraron ${resultados.length} estudiante(s) cercano(s)`,
+          duration: 5000,
+        });
       } else {
-        alert("No se encontraron estudiantes cercanos a esta ubicación.");
+        toast.info("Sin resultados", {
+          description:
+            "No se encontraron estudiantes cercanos a esta ubicación.",
+          duration: 4000,
+        });
         setNearbyResults([]);
       }
     } catch (error) {
       console.error("Error al buscar estudiantes cercanos:", error);
-      alert("Ocurrió un error al buscar estudiantes cercanos.");
+      toast.dismiss(loadingToast);
+      toast.error("Error en la búsqueda", {
+        description:
+          "Ocurrió un error al buscar estudiantes cercanos. Por favor, intenta nuevamente.",
+        duration: 5000,
+      });
     }
+  };
+
+  const limpiarResultadosCercanos = () => {
+    const { map, layers } = useMapStore.getState();
+
+    // Remover la capa del mapa
+    const layerIndex = layers.findIndex((l) => l.id === "estudiantes_cercanos");
+    if (layerIndex !== -1 && map) {
+      const layer = layers[layerIndex].layer;
+      map.removeLayer(layer);
+      layers.splice(layerIndex, 1);
+    }
+
+    // Limpiar resultados del estado
+    setNearbyResults([]);
+
+    toast.success("Resultados limpiados", {
+      description: "Los resultados de búsqueda han sido eliminados del mapa.",
+      duration: 3000,
+    });
   };
 
   return (
@@ -421,9 +463,13 @@ export default function HomePage() {
                         Buscar estudiantes cercanos
                       </Button>
                       {(!featureValues || !featureValues.coord_x) && (
-                        <p className="text-xs text-orange-600 mt-2">
-                          ⚠️ Selecciona una ubicación en el mapa primero
-                        </p>
+                        <div className="mt-3 p-2 bg-orange-50 border border-orange-200 rounded-md flex items-start gap-2">
+                          <span className="text-orange-500 mt-0.5">⚠️</span>
+                          <p className="text-xs text-orange-700 flex-1">
+                            Selecciona una ubicación en el mapa primero haciendo
+                            clic en cualquier punto.
+                          </p>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -630,10 +676,7 @@ export default function HomePage() {
                     ))}
                   </div>
                   <button
-                    onClick={() => {
-                      setNearbyResults([]);
-                      // Opcionalmente, remover la capa del mapa
-                    }}
+                    onClick={limpiarResultadosCercanos}
                     className="mt-3 w-full text-sm text-blue-600 hover:text-blue-800 underline"
                   >
                     Limpiar resultados

@@ -19,6 +19,7 @@ import SelectTipoUniversitario from "../selects/SelectTipoUniversitario";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { toast } from "sonner";
 
 const schema = z
   .object({
@@ -85,35 +86,61 @@ export default function LocationModal() {
   const [loading, setLoading] = useState(false);
 
   const onSubmit = rhfHandleSubmit(async (data) => {
-    if (!user) return;
-    setLoading(true);
-
-    const res = await fetch("/api/ubicaciones", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        user_id: user.user?.id,
-        email: user.user?.email,
-        nombre_completo: user.user?.user_metadata.full_name,
-        localidad: data.localidad,
-        facultad: data.facultad,
-        carrera: data.carrera,
-        profesion: data.profesion,
-        lat,
-        lon,
-      }),
-    });
-
-    const responseData = await res.json();
-
-    if (responseData.success) {
-      await updateStudentLocationLayer(user.user!);
-      setModalOpen(false);
-    } else {
-      alert(responseData.error);
+    if (!user) {
+      toast.error("Error de autenticación", {
+        description: "Por favor, inicia sesión para continuar.",
+      });
+      return;
     }
 
-    setLoading(false);
+    setLoading(true);
+    const loadingToast = toast.loading("Guardando ubicación...");
+
+    try {
+      const res = await fetch("/api/ubicaciones", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: user.user?.id,
+          email: user.user?.email,
+          nombre_completo: user.user?.user_metadata.full_name,
+          localidad: data.localidad,
+          facultad: data.facultad,
+          carrera: data.carrera,
+          profesion: data.profesion,
+          lat,
+          lon,
+        }),
+      });
+
+      const responseData = await res.json();
+
+      toast.dismiss(loadingToast);
+
+      if (responseData.success) {
+        await updateStudentLocationLayer(user.user!);
+        toast.success("¡Ubicación guardada!", {
+          description: "Tu ubicación se ha guardado correctamente en el mapa.",
+          duration: 4000,
+        });
+        setModalOpen(false);
+      } else {
+        toast.error("Error al guardar", {
+          description: responseData.error || "No se pudo guardar la ubicación.",
+          duration: 5000,
+        });
+      }
+    } catch (error) {
+      toast.dismiss(loadingToast);
+      toast.error("Error de conexión", {
+        description:
+          "Ocurrió un error al intentar guardar la ubicación. Por favor, verifica tu conexión e intenta nuevamente.",
+        duration: 5000,
+      });
+      console.error("Error al guardar ubicación:", error);
+    } finally {
+      setLoading(false);
+    }
   });
 
   return (
