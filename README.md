@@ -1,10 +1,6 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
-
-## Getting Started
-
-First, run the development server:
-
 ```bash
+npm i
+
 npm run dev
 # or
 yarn dev
@@ -14,23 +10,82 @@ pnpm dev
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abrir [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+https://supabase.wordpress.com/2023/05/22/simplificando-las-busquedas-geoespaciales-con-geohash-en-supabase/
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Agregar una columna geohash que permita realizar búsquedas geoespaciales rápidas (por proximidad o área) en Supabase (PostgreSQL).
 
-## Learn More
+🧭 1. Agregar la columna geohash
+Crear la columna donde se almacenará el hash geoespacial:
 
-To learn more about Next.js, take a look at the following resources:
+```
+ALTER TABLE tu_tabla
+ADD COLUMN geohash TEXT;
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+🧮 2. Instalar la extensión necesaria
+Supabase usa PostgreSQL, que permite instalar la extensión postgis (si no está habilitada ya).
+Con postgis, podés crear un punto geográfico y convertirlo en geohash.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Ejecutá esto en el SQL Editor de Supabase:
 
-## Deploy on Vercel
+```
+CREATE EXTENSION IF NOT EXISTS postgis;
+CREATE EXTENSION IF NOT EXISTS postgis_raster;
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+🌍 3. Generar los geohash desde latitud y longitud
+Una vez habilitada la extensión, podés usar la función ST_GeoHash de PostGIS.
+Ejemplo para llenar los valores de la nueva columna:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+UPDATE tu_tabla
+SET geohash = ST_GeoHash(
+  ST_SetSRID(ST_MakePoint(longitud, latitud), 4326),
+  8  -- precisión (de 1 a 12, 8 es buen equilibrio)
+);
+```
+
+👉 Cuanto mayor el número, más precisa la ubicación (y más largo el hash).
+Por ejemplo:
+
+- 5 → ~5 km de precisión
+
+- 8 → ~38 metros
+
+- 12 → ~3 cm
+
+🔄 4. Mantener actualizado el geohash automáticamente (opcional)
+
+Podés crear un trigger para que el geohash se actualice cada vez que cambien latitud o longitud:
+
+```
+CREATE OR REPLACE FUNCTION update_geohash()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.geohash := ST_GeoHash(
+    ST_SetSRID(ST_MakePoint(NEW.lon, NEW.lat), 4326),
+    8
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_update_geohash
+BEFORE INSERT OR UPDATE OF lat, lon ON ubicacionesdeestudiantes
+FOR EACH ROW
+EXECUTE FUNCTION update_geohash();
+```
+
+🔍 5. Búsquedas por proximidad usando geohash
+
+Podés buscar puntos cercanos filtrando por prefijo del geohash (porque los geohash cercanos comparten el mismo prefijo):
+
+```
+SELECT *
+FROM tu_tabla
+WHERE geohash LIKE LEFT('ezs42e44', 5) || '%';
+```
+
+Esto devolverá todos los registros con geohash cercanos al área del hash ezs42e44 con precisión de 5 caracteres.

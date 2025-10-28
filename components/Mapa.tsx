@@ -20,6 +20,7 @@ import Overlay from "ol/Overlay";
 import { toast } from "sonner";
 import { FeatureValues } from "@/lib/types/featureValues";
 import { excludeKeys } from "@/lib/types/excludeKeys";
+import { buscarCercanos } from "@/lib/utils/buscarCercanos";
 
 export default function Mapa() {
   const mapRef = useRef<HTMLDivElement | null>(null);
@@ -345,6 +346,16 @@ export default function Mapa() {
       if (!map.forEachFeatureAtPixel(evt.pixel, (f) => f)) {
         closePopup(popupElement, popupOverlay);
       }
+    });
+
+    map.on("moveend", async () => {
+      const view = map.getView();
+      const [lon, lat] = view.getCenter()!;
+      const lonLat = toLonLat([lon, lat]);
+
+      //console.log("Centro del mapa:", lonLat);
+      //const puntos = await buscarCercanos(lat, lon);
+      //console.log("Puntos cercanos:", puntos);
     });
 
     return () => {

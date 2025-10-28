@@ -25,6 +25,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import LocationModal from "@/components/modals/LocationModal";
 import { excludeKeys } from "@/lib/types/excludeKeys";
+import { Button } from "@/components/ui/button";
+import { buscarCercanos } from "@/lib/utils/buscarCercanos";
 
 export default function HomePage() {
   const { user, loading } = useAuth();
@@ -95,6 +97,31 @@ export default function HomePage() {
       map.addLayer(l.layer);
     });
   }
+
+  const buscarEstudiantesCercanos = async () => {
+    //  Fijarse en el store de mapa si hay alguna ubicación seleccionada
+    const ubicacionSeleccionada = featureValues;
+    console.log("Ubicación seleccionada:", ubicacionSeleccionada);
+
+    // Validar si existen los datos coord_x y coord_y
+    if (
+      !ubicacionSeleccionada ||
+      !ubicacionSeleccionada.coord_x ||
+      !ubicacionSeleccionada.coord_y
+    ) {
+      console.error("No se encontró una ubicación válida.");
+      return;
+    }
+
+    // Extraer las coordenadas
+    const x = parseFloat(ubicacionSeleccionada.coord_x);
+    const y = parseFloat(ubicacionSeleccionada.coord_y);
+
+    // Llamar a la función buscarCercanos con las coordenadas
+    const resultados = await buscarCercanos(y, x);
+
+    //  Mostrar los resultados en el mapa para visualizarlos
+  };
 
   return (
     <div className="h-screen flex flex-col bg-gray-50">
@@ -347,37 +374,44 @@ export default function HomePage() {
               )}
 
               {activeSection === "search" && (
-                <div className="space-y-3 sm:space-y-4">
-                  <h3 className="font-medium text-gray-900 text-sm sm:text-base">
-                    Buscar Ubicación
-                  </h3>
-                  <div className="relative">
-                    <Search
-                      className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                      size={16}
-                    />
-                    <input
-                      type="text"
-                      placeholder="Buscar lugares, coordenadas..."
-                      className="w-full pl-9 sm:pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
+                <>
+                  <div className="space-y-3 sm:space-y-4">
+                    <Button className="" onClick={buscarEstudiantesCercanos}>
+                      Buscar estudiantes cercanos
+                    </Button>
                   </div>
-                  <div className="space-y-2">
-                    <h4 className="text-xs sm:text-sm font-medium text-gray-700">
-                      Búsquedas Recientes
-                    </h4>
-                    {["Buenos Aires", "Córdoba", "Mendoza"].map(
-                      (place, index) => (
-                        <button
-                          key={index}
-                          className="w-full text-left px-3 py-2 text-xs sm:text-sm text-gray-600 hover:bg-gray-50 rounded transition-colors"
-                        >
-                          {place}
-                        </button>
-                      )
-                    )}
+                  <div className="space-y-3 sm:space-y-4">
+                    <h3 className="font-medium text-gray-900 text-sm sm:text-base">
+                      Buscar Ubicación
+                    </h3>
+                    <div className="relative">
+                      <Search
+                        className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                        size={16}
+                      />
+                      <input
+                        type="text"
+                        placeholder="Buscar lugares, coordenadas..."
+                        className="w-full pl-9 sm:pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <h4 className="text-xs sm:text-sm font-medium text-gray-700">
+                        Búsquedas Recientes
+                      </h4>
+                      {["Buenos Aires", "Córdoba", "Mendoza"].map(
+                        (place, index) => (
+                          <button
+                            key={index}
+                            className="w-full text-left px-3 py-2 text-xs sm:text-sm text-gray-600 hover:bg-gray-50 rounded transition-colors"
+                          >
+                            {place}
+                          </button>
+                        )
+                      )}
+                    </div>
                   </div>
-                </div>
+                </>
               )}
 
               {activeSection === "filter" && (
