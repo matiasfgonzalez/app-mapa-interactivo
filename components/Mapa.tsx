@@ -20,7 +20,6 @@ import Overlay from "ol/Overlay";
 import { toast } from "sonner";
 import { FeatureValues } from "@/lib/types/featureValues";
 import { excludeKeys } from "@/lib/types/excludeKeys";
-import { buscarCercanos } from "@/lib/utils/buscarCercanos";
 
 export default function Mapa() {
   const mapRef = useRef<HTMLDivElement | null>(null);
@@ -52,6 +51,11 @@ export default function Mapa() {
   const handleEliminar = async (featureId: string, featureName: string) => {
     try {
       const map = useMapStore.getState().map; // 👈 siempre el valor actualizado
+      if (!map) {
+        toast.error("El mapa no está inicializado");
+        return;
+      }
+
       if (!featureId || featureId === "unknown")
         return toast.error("Este dato no se puede eliminar");
 
@@ -69,7 +73,16 @@ export default function Mapa() {
       if (!res.ok) throw new Error(result.error || "Error al eliminar");
 
       const user = useMapStore.getState().user;
-      const vectorLayer = await fetchUbicacionesDelEstudiante(user!);
+      if (!user) {
+        toast.error("Usuario no encontrado");
+        return;
+      }
+
+      const vectorLayer = await fetchUbicacionesDelEstudiante(user);
+      if (!vectorLayer) {
+        toast.error("No se pudo cargar la capa de ubicaciones");
+        return;
+      }
 
       // Agregar la capa al mapa
       map.addLayer(vectorLayer);
@@ -368,11 +381,15 @@ export default function Mapa() {
 
   // 2️⃣ Cargar ubicaciones solo cuando el usuario ya esté disponible
   useEffect(() => {
-    if (!user) return;
+    if (!user || !map) return;
 
     const loadUbicaciones = async () => {
       try {
         const vectorLayer = await fetchUbicacionesDelEstudiante(user);
+        if (!vectorLayer) {
+          console.error("No se pudo cargar la capa de ubicaciones");
+          return;
+        }
 
         // Agregar la capa al mapa
         map.addLayer(vectorLayer);
@@ -400,7 +417,7 @@ export default function Mapa() {
     };
 
     loadUbicaciones();
-  }, [user]);
+  }, [user, map]);
 
   useEffect(() => {
     if (user) {

@@ -4,38 +4,44 @@ import {
   fetchUbicacionesDelEstudiante,
   createNearbyStudentsLayer,
 } from "@/lib/const/layers";
+import type Map from "ol/Map";
+import type { Layer } from "ol/layer";
+import type { NearbyStudentType } from "@/lib/types/nearbyStudentType";
+import type { FeatureValues } from "@/lib/types/featureValues";
 
 export interface LayerData {
   id: string;
   title: string;
   visible: boolean;
   opacity: number;
-  layer: any; // referencia real a ol/layer
+  layer: Layer; // referencia real a ol/layer
 }
 
 interface MapState {
-  map: any | null; // referencia a OpenLayers Map
+  map: Map | null; // referencia a OpenLayers Map
   layers: LayerData[];
   selectedRegion: string | null;
-  featureValues: Record<string, any> | null;
+  featureValues: FeatureValues | null;
   lon: number | null;
   lat: number | null;
   checkUbicacion: boolean;
   modalOpen: boolean;
   user: User | null;
 
-  setMap: (map: any) => void;
+  setMap: (map: Map) => void;
   setLayers: (layers: LayerData[]) => void;
   toggleLayer: (id: string, visible: boolean) => void;
   setOpacity: (id: string, opacity: number) => void;
   setSelectedRegion: (id: string | null) => void;
-  setFeatureValues: (values: Record<string, any> | null) => void;
+  setFeatureValues: (values: FeatureValues | null) => void;
   setCoordinate: (lon: number | null, lat: number | null) => void;
   setCheckUbicacion: (check: boolean) => void;
   setModalOpen: (open: boolean) => void;
   setUser: (user: User | null) => void;
   updateStudentLocationLayer: (user: User) => Promise<void>;
-  updateNearbyStudentsLayer: (nearbyStudents: any[]) => Promise<void>;
+  updateNearbyStudentsLayer: (
+    nearbyStudents: NearbyStudentType[]
+  ) => Promise<void>;
 }
 
 export const useMapStore = create<MapState>((set, get) => ({

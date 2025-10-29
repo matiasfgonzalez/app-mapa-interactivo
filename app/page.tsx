@@ -28,6 +28,7 @@ import { excludeKeys } from "@/lib/types/excludeKeys";
 import { Button } from "@/components/ui/button";
 import { buscarCercanos } from "@/lib/utils/buscarCercanos";
 import { toast } from "sonner";
+import { NearbyStudentType } from "@/lib/types/nearbyStudentType";
 
 export default function HomePage() {
   const { user, loading } = useAuth();
@@ -53,7 +54,7 @@ export default function HomePage() {
     (s) => s.updateNearbyStudentsLayer
   );
 
-  const [nearbyResults, setNearbyResults] = useState<any[]>([]);
+  const [nearbyResults, setNearbyResults] = useState<NearbyStudentType[]>([]);
 
   // Detectar si es dispositivo móvil
   useEffect(() => {
@@ -99,9 +100,9 @@ export default function HomePage() {
     map.getLayers().clear();
 
     // Agregar las capas en el nuevo orden
-    newLayers.forEach((l) => {
+    for (const l of newLayers) {
       map.addLayer(l.layer);
-    });
+    }
   }
 
   const buscarEstudiantesCercanos = async () => {
@@ -110,11 +111,7 @@ export default function HomePage() {
     console.log("Ubicación seleccionada:", ubicacionSeleccionada);
 
     // Validar si existen los datos coord_x y coord_y
-    if (
-      !ubicacionSeleccionada ||
-      !ubicacionSeleccionada.coord_x ||
-      !ubicacionSeleccionada.coord_y
-    ) {
+    if (!ubicacionSeleccionada?.coord_x || !ubicacionSeleccionada?.coord_y) {
       console.error("No se encontró una ubicación válida.");
       toast.error("Ubicación no seleccionada", {
         description: "Por favor, selecciona una ubicación en el mapa primero.",
@@ -124,8 +121,8 @@ export default function HomePage() {
     }
 
     // Extraer las coordenadas
-    const x = parseFloat(ubicacionSeleccionada.coord_x);
-    const y = parseFloat(ubicacionSeleccionada.coord_y);
+    const x = Number.parseFloat(ubicacionSeleccionada.coord_x);
+    const y = Number.parseFloat(ubicacionSeleccionada.coord_y);
 
     // Mostrar loading toast
     const loadingToast = toast.loading("Buscando estudiantes cercanos...");
@@ -390,7 +387,7 @@ export default function HomePage() {
                                 onChange={(e) =>
                                   setOpacity(
                                     layer.id,
-                                    parseFloat(e.target.value)
+                                    Number.parseFloat(e.target.value)
                                   )
                                 }
                                 className="flex-1 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
@@ -454,15 +451,13 @@ export default function HomePage() {
                         className="w-full"
                         onClick={buscarEstudiantesCercanos}
                         disabled={
-                          !featureValues ||
-                          !featureValues.coord_x ||
-                          !featureValues.coord_y
+                          !featureValues?.coord_x || !featureValues?.coord_y
                         }
                       >
                         <Search className="mr-2 h-4 w-4" />
                         Buscar estudiantes cercanos
                       </Button>
-                      {(!featureValues || !featureValues.coord_x) && (
+                      {!featureValues?.coord_x && (
                         <div className="mt-3 p-2 bg-orange-50 border border-orange-200 rounded-md flex items-start gap-2">
                           <span className="text-orange-500 mt-0.5">⚠️</span>
                           <p className="text-xs text-orange-700 flex-1">

@@ -11,6 +11,7 @@ import { Point } from "ol/geom";
 import { fromLonLat } from "ol/proj";
 import { Icon, Style } from "ol/style";
 import { EstudianteType } from "../types/estudianteType";
+import type { NearbyStudentType } from "../types/nearbyStudentType";
 // Capas para insertar en el mapa
 
 // Capa base OSM
@@ -142,13 +143,7 @@ export const ubicacionDelEstudianteLayer = new VectorLayer({
 
 // Función para crear una capa con estudiantes cercanos
 export const createNearbyStudentsLayer = async (
-  nearbyStudents: Array<{
-    id: string;
-    nombre_completo: string;
-    lat: number;
-    lon: number;
-    distancia: number;
-  }>
+  nearbyStudents: NearbyStudentType[]
 ) => {
   const features = await Promise.all(
     nearbyStudents.map(async (estudiante) => {

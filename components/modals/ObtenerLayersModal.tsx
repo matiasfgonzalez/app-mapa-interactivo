@@ -102,6 +102,11 @@ const ObtenerLayersModal = ({
   };
 
   const addLayer = async () => {
+    if (!map) {
+      toast.error("El mapa no está inicializado");
+      return;
+    }
+
     const geoJson = await getLayerGeoservicio(
       urlValue,
       capaSelect,

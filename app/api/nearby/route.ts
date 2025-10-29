@@ -4,17 +4,18 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import ngeohash from "ngeohash";
 import { toLonLat } from "ol/proj";
+import type { NearbyStudentType } from "@/lib/types/nearbyStudentType";
 
 export async function GET(request: Request) {
   try {
     const supabase = await createClient();
 
     const { searchParams } = new URL(request.url);
-    const latParam = parseFloat(searchParams.get("lat") || "");
-    const lonParam = parseFloat(searchParams.get("lon") || "");
+    const latParam = Number.parseFloat(searchParams.get("lat") || "");
+    const lonParam = Number.parseFloat(searchParams.get("lon") || "");
 
     // 🔍 Validar los parámetros
-    if (isNaN(latParam) || isNaN(lonParam)) {
+    if (Number.isNaN(latParam) || Number.isNaN(lonParam)) {
       return NextResponse.json(
         { error: "Debe enviar parámetros válidos: lat y lon" },
         { status: 400 }
@@ -59,7 +60,7 @@ export async function GET(request: Request) {
 
     // 4️⃣ Calcular distancia (Haversine)
     const R = 6371e3; // radio de la Tierra en metros
-    const lugaresConDistancia = data.map((item) => {
+    const lugaresConDistancia: NearbyStudentType[] = data.map((item) => {
       const φ1 = (lat * Math.PI) / 180;
       const φ2 = (item.lat * Math.PI) / 180;
       const Δφ = ((item.lat - lat) * Math.PI) / 180;
@@ -81,8 +82,9 @@ export async function GET(request: Request) {
       count: lugaresConDistancia.length,
       results: lugaresConDistancia.slice(0, 20),
     });
-  } catch (err: any) {
+  } catch (err) {
     console.error(err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
