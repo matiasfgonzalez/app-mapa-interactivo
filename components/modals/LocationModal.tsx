@@ -67,6 +67,7 @@ export default function LocationModal() {
     formState: { errors },
     watch,
     setValue,
+    reset,
   } = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -84,6 +85,13 @@ export default function LocationModal() {
   const watchedTipoUni = watch("tipoUni");
 
   const [loading, setLoading] = useState(false);
+
+  const handleClose = () => {
+    if (!loading) {
+      reset();
+      setModalOpen(false);
+    }
+  };
 
   const onSubmit = rhfHandleSubmit(async (data) => {
     if (!user) {
@@ -123,6 +131,7 @@ export default function LocationModal() {
           description: "Tu ubicación se ha guardado correctamente en el mapa.",
           duration: 4000,
         });
+        reset();
         setModalOpen(false);
       } else {
         toast.error("Error al guardar", {
@@ -144,7 +153,7 @@ export default function LocationModal() {
   });
 
   return (
-    <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+    <Dialog open={modalOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Ubicación seleccionada</DialogTitle>
@@ -256,7 +265,12 @@ export default function LocationModal() {
 
             {/* Botones */}
             <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={() => setModalOpen(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleClose}
+                disabled={loading}
+              >
                 Cancelar
               </Button>
               <Button type="submit" disabled={loading}>
