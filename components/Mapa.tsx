@@ -133,7 +133,11 @@ export default function Mapa() {
         <!-- Header del popup -->
         <div class="popup-header">
           <h3 class="popup-title">${featureName}</h3>
-          <button class="popup-close" onclick="document.getElementById('popup').style.display='none'">
+          <button class="popup-close" onclick="(function() {
+            const popup = document.getElementById('popup');
+            popup.classList.remove('popup-show');
+            setTimeout(() => popup.style.display='none', 200);
+          })()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -173,7 +177,7 @@ export default function Mapa() {
               <line x1="10" y1="11" x2="10" y2="17"></line>
               <line x1="14" y1="11" x2="14" y2="17"></line>
             </svg>
-            Eliminar
+            <span>Eliminar</span>
           </button>
         </div>
       </div>
@@ -225,9 +229,14 @@ export default function Mapa() {
     const popupOverlay = new Overlay({
       id: "popup_overlay",
       element: popupElement,
-      positioning: "bottom-center",
+      autoPan: {
+        animation: {
+          duration: 250,
+        },
+      },
+      positioning: "center-center", // Popup centrado en el punto
       stopEvent: true,
-      offset: [0, -10], // para que no tape el punto
+      offset: [20, -233], // Desplazar ~160px (mitad del ancho del popup) para que el punto quede en el borde izquierdo
     });
     map.addOverlay(popupOverlay);
 
@@ -296,34 +305,71 @@ export default function Mapa() {
         setSelectedRegion(id || null);
         setFeatureValues(values);
 
-        // Zoom a la geometría
+        // Obtener la geometría y calcular su centro
         const geometry = selected.getGeometry();
         if (geometry) {
           const extent = geometry.getExtent();
+
+          // Calcular el centro de la geometría
+          const centerX = (extent[0] + extent[2]) / 2;
+          const centerY = (extent[1] + extent[3]) / 2;
+          const center = [centerX, centerY];
+
+          // Determinar el tipo de geometría para ajustar el zoom
+          const geometryType = geometry.getType();
+          let maxZoom = 12;
+          let padding = [100, 400, 100, 100]; // [top, right, bottom, left] - más espacio a la derecha para el popup
+
+          // Ajustar zoom según el tipo de geometría
+          if (geometryType === "Point" || geometryType === "MultiPoint") {
+            maxZoom = 14;
+            padding = [80, 380, 80, 80];
+          } else if (
+            geometryType === "LineString" ||
+            geometryType === "MultiLineString"
+          ) {
+            maxZoom = 13;
+            padding = [90, 400, 90, 90];
+          } else {
+            // Polígonos y otras geometrías
+            maxZoom = 11;
+            padding = [100, 420, 100, 100];
+          }
+
+          // Hacer zoom suave con animación mejorada
           map.getView().fit(extent, {
-            duration: 1000,
-            padding: [50, 50, 50, 50],
-            maxZoom: 14,
+            duration: 800,
+            padding: padding,
+            maxZoom: maxZoom,
+            easing: (t) => (t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t), // easeInOutQuad
           });
 
-          // Mostrar popup mejorado en el centro de la geometría
-          const center = geometry.getClosestPoint(
-            fromLonLat([lon || 0, lat || 0])
-          );
-          popupOverlay.setPosition(center);
-          popupElement.innerHTML = createPopupContent(
-            values,
-            popupElement,
-            popupOverlay
-          );
-          popupElement.style.display = "block";
-          popupElement.classList.remove("hidden");
+          // Pequeño delay antes de mostrar el popup para que la animación se complete
+          setTimeout(() => {
+            // Posicionar el popup en el centro de la geometría
+            popupOverlay.setPosition(center);
+            popupElement.innerHTML = createPopupContent(
+              values,
+              popupElement,
+              popupOverlay
+            );
+            popupElement.style.display = "block";
+            popupElement.classList.remove("hidden");
+
+            // Trigger de animación
+            setTimeout(() => {
+              popupElement.classList.add("popup-show");
+            }, 10);
+          }, 400);
         }
       } else {
         // Deselección
         setSelectedRegion(null);
         setFeatureValues(null);
-        closePopup(popupElement, popupOverlay);
+        popupElement.classList.remove("popup-show");
+        setTimeout(() => {
+          closePopup(popupElement, popupOverlay);
+        }, 200);
       }
     });
 
@@ -357,7 +403,10 @@ export default function Mapa() {
     // Cerrar popup al hacer clic fuera
     map.on("click", (evt) => {
       if (!map.forEachFeatureAtPixel(evt.pixel, (f) => f)) {
-        closePopup(popupElement, popupOverlay);
+        popupElement.classList.remove("popup-show");
+        setTimeout(() => {
+          closePopup(popupElement, popupOverlay);
+        }, 200);
       }
     });
 
@@ -431,10 +480,10 @@ export default function Mapa() {
         <div ref={mapRef} className="w-full h-full" />
         <div
           id="popup"
-          className="absolute bg-white text-gray-800 rounded-lg shadow-xl border border-gray-200 hidden z-50 min-w-[280px] max-w-[400px] popup-animated"
+          className="absolute bg-white text-gray-800 rounded-2xl shadow-2xl border border-gray-100 hidden z-50 min-w-[300px] max-w-[420px]"
           style={{
-            backdropFilter: "blur(10px)",
-            backgroundColor: "rgba(255, 255, 255, 0.95)",
+            backdropFilter: "blur(20px)",
+            backgroundColor: "rgba(255, 255, 255, 0.98)",
           }}
         />
       </div>
@@ -445,51 +494,56 @@ export default function Mapa() {
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
             sans-serif;
           overflow: hidden;
-          border-radius: 12px;
+          border-radius: 16px;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3),
+            0 0 0 1px rgba(0, 0, 0, 0.1);
         }
 
         .popup-header {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 16px 20px 12px 20px;
+          padding: 18px 24px 14px 24px;
           border-bottom: 1px solid #e5e7eb;
-          background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
 
         .popup-title {
-          font-size: 16px;
-          font-weight: 600;
-          color: #1f2937;
+          font-size: 17px;
+          font-weight: 700;
+          color: #ffffff;
           margin: 0;
           line-height: 1.4;
-          max-width: 200px;
+          max-width: 220px;
           word-break: break-word;
+          text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .popup-close {
-          background: none;
+          background: rgba(255, 255, 255, 0.2);
           border: none;
-          color: #6b7280;
+          color: #ffffff;
           cursor: pointer;
-          padding: 4px;
-          border-radius: 6px;
+          padding: 6px;
+          border-radius: 8px;
           transition: all 0.2s ease;
           display: flex;
           align-items: center;
           justify-content: center;
           flex-shrink: 0;
+          backdrop-filter: blur(10px);
         }
 
         .popup-close:hover {
-          background-color: #f3f4f6;
-          color: #374151;
+          background: rgba(255, 255, 255, 0.3);
+          transform: rotate(90deg);
         }
 
         .popup-content {
-          max-height: 300px;
+          max-height: 320px;
           overflow-y: auto;
-          padding: 16px 20px 20px 20px;
+          padding: 20px 24px 24px 24px;
+          background: #ffffff;
 
           /* Scroll elegante */
           scrollbar-width: thin;
@@ -503,69 +557,111 @@ export default function Mapa() {
         .popup-content::-webkit-scrollbar-track {
           background: transparent;
           border-radius: 3px;
+          margin: 8px 0;
         }
 
         .popup-content::-webkit-scrollbar-thumb {
-          background-color: #cbd5e1;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
           border-radius: 3px;
-          transition: background-color 0.2s ease;
+          transition: all 0.2s ease;
         }
 
         .popup-content::-webkit-scrollbar-thumb:hover {
-          background-color: #94a3b8;
+          background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
         }
 
         .popup-item {
           display: flex;
           justify-content: space-between;
           align-items: flex-start;
-          padding: 8px 0;
-          border-bottom: 1px solid #f1f5f9;
-          gap: 12px;
+          padding: 10px 12px;
+          border-radius: 8px;
+          margin-bottom: 6px;
+          gap: 16px;
+          transition: all 0.2s ease;
+          background: #f8fafc;
+        }
+
+        .popup-item:hover {
+          background: #f1f5f9;
+          transform: translateX(4px);
         }
 
         .popup-item:last-child {
-          border-bottom: none;
-          padding-bottom: 0;
+          margin-bottom: 0;
         }
 
         .popup-label {
           font-size: 13px;
-          font-weight: 500;
-          color: #4b5563;
+          font-weight: 600;
+          color: #64748b;
           flex-shrink: 0;
-          min-width: 80px;
+          min-width: 90px;
+          text-transform: uppercase;
+          font-size: 11px;
+          letter-spacing: 0.5px;
         }
 
         .popup-value {
-          font-size: 13px;
-          color: #1f2937;
+          font-size: 14px;
+          color: #1e293b;
           text-align: right;
           word-break: break-word;
-          line-height: 1.4;
+          line-height: 1.5;
+          font-weight: 500;
         }
 
-        /* Animación de entrada */
-        .popup-animated {
-          transition: all 0.2s ease;
-          transform: translateY(-5px);
+        /* Animación de entrada mejorada */
+        #popup {
+          transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+          transform: translateX(-20px) scale(0.9);
           opacity: 0;
+          pointer-events: none;
         }
 
-        .popup-animated[style*="block"] {
-          transform: translateY(0);
+        #popup.popup-show {
+          transform: translateX(0) scale(1);
           opacity: 1;
+          pointer-events: auto;
         }
 
-        /* Botones de acción */
+        /* Flecha del popup - apunta hacia la izquierda */
+        #popup::before {
+          content: "";
+          position: absolute;
+          left: -10px;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 0;
+          height: 0;
+          border-top: 12px solid transparent;
+          border-bottom: 12px solid transparent;
+          border-right: 12px solid #667eea;
+          filter: drop-shadow(-2px 0 4px rgba(0, 0, 0, 0.1));
+        }
+
+        #popup::after {
+          content: "";
+          position: absolute;
+          left: -8px;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 0;
+          height: 0;
+          border-top: 10px solid transparent;
+          border-bottom: 10px solid transparent;
+          border-right: 10px solid #ffffff;
+        }
+
+        /* Botones de acción mejorados */
         .popup-actions {
           display: flex;
-          gap: 8px;
-          padding: 16px 20px;
+          gap: 10px;
+          padding: 18px 24px;
           border-top: 1px solid #e5e7eb;
-          background: #f9fafb;
-          border-bottom-left-radius: 12px;
-          border-bottom-right-radius: 12px;
+          background: linear-gradient(180deg, #f9fafb 0%, #f1f5f9 100%);
+          border-bottom-left-radius: 16px;
+          border-bottom-right-radius: 16px;
         }
 
         .popup-btn {
@@ -573,85 +669,184 @@ export default function Mapa() {
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 6px;
-          padding: 10px 16px;
-          font-size: 13px;
-          font-weight: 500;
+          gap: 8px;
+          padding: 12px 18px;
+          font-size: 14px;
+          font-weight: 600;
           border: none;
-          border-radius: 8px;
+          border-radius: 10px;
           cursor: pointer;
-          transition: all 0.2s ease;
+          transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
           text-decoration: none;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .popup-btn::before {
+          content: "";
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 0;
+          height: 0;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.3);
+          transform: translate(-50%, -50%);
+          transition: width 0.6s, height 0.6s;
+        }
+
+        .popup-btn:hover::before {
+          width: 300px;
+          height: 300px;
         }
 
         .popup-btn-edit {
-          background-color: #3b82f6;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
           color: white;
+          box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
         }
 
         .popup-btn-edit:hover {
-          background-color: #2563eb;
-          transform: translateY(-1px);
-          box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+          transform: translateY(-2px);
+          box-shadow: 0 6px 25px rgba(102, 126, 234, 0.5);
+        }
+
+        .popup-btn-edit:active {
+          transform: translateY(0);
         }
 
         .popup-btn-delete {
-          background-color: #ef4444;
+          background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
           color: white;
+          box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
         }
 
         .popup-btn-delete:hover {
-          background-color: #dc2626;
-          transform: translateY(-1px);
-          box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+          transform: translateY(-2px);
+          box-shadow: 0 6px 25px rgba(245, 87, 108, 0.5);
+        }
+
+        .popup-btn-delete:active {
+          transform: translateY(0);
         }
 
         .popup-btn svg {
-          width: 16px;
-          height: 16px;
+          width: 18px;
+          height: 18px;
+          position: relative;
+          z-index: 1;
         }
 
-        /* Responsive */
+        .popup-btn span {
+          position: relative;
+          z-index: 1;
+        }
+
+        /* Efecto de brillo en el header */
+        .popup-header::before {
+          content: "";
+          position: absolute;
+          top: -50%;
+          left: -50%;
+          width: 200%;
+          height: 200%;
+          background: linear-gradient(
+            45deg,
+            transparent,
+            rgba(255, 255, 255, 0.1),
+            transparent
+          );
+          transform: rotate(45deg);
+          animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+          0% {
+            transform: translateX(-100%) rotate(45deg);
+          }
+          100% {
+            transform: translateX(100%) rotate(45deg);
+          }
+        }
+
+        /* Responsive mejorado */
         @media (max-width: 480px) {
           #popup {
-            min-width: 260px !important;
-            max-width: 300px !important;
+            min-width: 280px !important;
+            max-width: 320px !important;
           }
 
           .popup-header {
-            padding: 12px 16px 10px 16px;
+            padding: 14px 18px 12px 18px;
           }
 
           .popup-title {
-            font-size: 14px;
-            max-width: 180px;
+            font-size: 15px;
+            max-width: 200px;
           }
 
           .popup-content {
-            padding: 12px 16px 16px 16px;
-            max-height: 200px;
+            padding: 16px 18px 18px 18px;
+            max-height: 260px;
           }
 
           .popup-actions {
-            padding: 12px 16px;
+            padding: 14px 18px;
             flex-direction: column;
-            gap: 8px;
+            gap: 10px;
           }
 
           .popup-btn {
-            padding: 12px;
+            padding: 14px;
             font-size: 14px;
           }
 
           .popup-item {
             flex-direction: column;
             align-items: flex-start;
-            gap: 4px;
+            gap: 6px;
+            padding: 10px;
           }
 
           .popup-value {
             text-align: left;
           }
+
+          .popup-label {
+            min-width: auto;
+          }
+        }
+
+        /* Animación de entrada para items */
+        @keyframes slideInRight {
+          from {
+            opacity: 0;
+            transform: translateX(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
+        .popup-show .popup-item {
+          animation: slideInRight 0.3s ease forwards;
+        }
+
+        .popup-show .popup-item:nth-child(1) {
+          animation-delay: 0.05s;
+        }
+        .popup-show .popup-item:nth-child(2) {
+          animation-delay: 0.1s;
+        }
+        .popup-show .popup-item:nth-child(3) {
+          animation-delay: 0.15s;
+        }
+        .popup-show .popup-item:nth-child(4) {
+          animation-delay: 0.2s;
+        }
+        .popup-show .popup-item:nth-child(5) {
+          animation-delay: 0.25s;
         }
       `}</style>
     </>
