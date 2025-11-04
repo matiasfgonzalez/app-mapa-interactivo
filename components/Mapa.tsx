@@ -128,6 +128,12 @@ export default function Mapa() {
     const featureId = values.id || values.gid || values.objectid || "unknown";
     const featureName = (values.nombre as string) || "Región Seleccionada";
 
+    // Verificar si es una ubicación del usuario actual
+    const currentUser = useMapStore.getState().user;
+    const featureUserId = values.user_id || values.userid || values.usuario_id;
+    const isOwnedByCurrentUser =
+      currentUser && featureUserId && featureUserId === currentUser.id;
+
     return `
       <div class="popup-container">
         <!-- Header del popup -->
@@ -162,14 +168,17 @@ export default function Mapa() {
             .join("")}
         </div>
         
-        <!-- Botones de acción -->
+        <!-- Botones de acción - solo mostrar si es del usuario -->
+        ${
+          isOwnedByCurrentUser
+            ? `
         <div class="popup-actions">
           <button 
             class="popup-btn popup-btn-delete" 
             onclick="window.mapInstance?.handleEliminar('${featureId}', '${featureName.replace(
-      /'/g,
-      "\\'"
-    )}')"
+                /'/g,
+                "\\'"
+              )}')"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="3,6 5,6 21,6"></polyline>
@@ -180,6 +189,26 @@ export default function Mapa() {
             <span>Eliminar</span>
           </button>
         </div>
+        `
+            : `
+        <div class="popup-actions">
+          <button 
+            class="popup-btn popup-btn-close" 
+            onclick="(function() {
+              const popup = document.getElementById('popup');
+              popup.classList.remove('popup-show');
+              setTimeout(() => popup.style.display='none', 200);
+            })()"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+            <span>Cerrar</span>
+          </button>
+        </div>
+        `
+        }
       </div>
     `;
   };
@@ -727,6 +756,21 @@ export default function Mapa() {
         }
 
         .popup-btn-delete:active {
+          transform: translateY(0);
+        }
+
+        .popup-btn-close {
+          background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+          color: white;
+          box-shadow: 0 4px 15px rgba(75, 85, 99, 0.4);
+        }
+
+        .popup-btn-close:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 25px rgba(75, 85, 99, 0.5);
+        }
+
+        .popup-btn-close:active {
           transform: translateY(0);
         }
 
