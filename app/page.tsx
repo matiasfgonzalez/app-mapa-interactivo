@@ -6,17 +6,16 @@ import {
   Menu,
   X,
   Layers,
-  Settings,
   Search,
-  Filter,
   Download,
-  Share,
+  Share2,
   ChevronDown,
-  Bell,
   ChevronUp,
-  InfoIcon,
+  Info,
   MapPin,
+  Users,
 } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { LayerData, useMapStore } from "@/store/mapStore";
 import { NavigationMenuOptions } from "@/components/NavigationMenu";
 import { useAuth } from "@/hooks/useAuth";
@@ -33,8 +32,8 @@ import { NearbyStudentType } from "@/lib/types/nearbyStudentType";
 export default function HomePage() {
   const { user, loading } = useAuth();
 
-  const [leftSidebarOpen, setLeftSidebarOpen] = useState(false); // Cerrado por defecto en mobile
-  const [rightSidebarOpen, setRightSidebarOpen] = useState(false); // Cerrado por defecto en mobile
+  const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
+  const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("layers");
   const [isMobile, setIsMobile] = useState(false);
   const [mobileBottomPanelOpen, setMobileBottomPanelOpen] = useState(false);
@@ -51,7 +50,7 @@ export default function HomePage() {
   const checkUbicacion = useMapStore((s) => s.checkUbicacion);
   const setCheckUbicacion = useMapStore((s) => s.setCheckUbicacion);
   const updateNearbyStudentsLayer = useMapStore(
-    (s) => s.updateNearbyStudentsLayer
+    (s) => s.updateNearbyStudentsLayer,
   );
 
   const [nearbyResults, setNearbyResults] = useState<NearbyStudentType[]>([]);
@@ -60,7 +59,6 @@ export default function HomePage() {
   useEffect(() => {
     const checkIsMobile = () => {
       setIsMobile(window.innerWidth < 768);
-      // En desktop, abrir sidebars por defecto
       if (window.innerWidth >= 768) {
         setLeftSidebarOpen(true);
         setRightSidebarOpen(true);
@@ -80,37 +78,22 @@ export default function HomePage() {
     }
   }, [leftSidebarOpen, rightSidebarOpen, isMobile]);
 
-  type Voto = {
-    partido: string;
-    porcentaje: number;
-  };
-
-  type Region = {
-    nombre: string;
-    votos: Voto[];
-  };
-
   function reorderLayers(newLayers: LayerData[]) {
-    // Actualizo store
     setLayers(newLayers);
 
     if (!map) return;
 
-    // Limpiar todas las capas del map
     map.getLayers().clear();
 
-    // Agregar las capas en el nuevo orden
     for (const l of newLayers) {
       map.addLayer(l.layer);
     }
   }
 
   const buscarEstudiantesCercanos = async () => {
-    //  Fijarse en el store de mapa si hay alguna ubicación seleccionada
     const ubicacionSeleccionada = featureValues;
     console.log("Ubicación seleccionada:", ubicacionSeleccionada);
 
-    // Validar si existen los datos coord_x y coord_y
     if (!ubicacionSeleccionada?.coord_x || !ubicacionSeleccionada?.coord_y) {
       console.error("No se encontró una ubicación válida.");
       toast.error("Ubicación no seleccionada", {
@@ -187,9 +170,9 @@ export default function HomePage() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
+    <div className="h-screen flex flex-col bg-background">
       {/* Navigation Header */}
-      <nav className="bg-white border-b border-gray-200 shadow-sm z-50 relative">
+      <nav className="bg-card border-b border-border shadow-sm z-50 relative">
         <div className="px-3 sm:px-4 lg:px-8">
           <div className="flex justify-between items-center h-14 sm:h-16">
             {/* Logo y controles de sidebar */}
@@ -199,18 +182,20 @@ export default function HomePage() {
                   setLeftSidebarOpen(!leftSidebarOpen);
                   if (isMobile && rightSidebarOpen) setRightSidebarOpen(false);
                 }}
-                className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+                className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                aria-label="Toggle menu"
               >
-                <Menu size={18} className="sm:w-5 sm:h-5" />
+                <Menu size={20} />
               </button>
-              <div className="flex items-center space-x-1 sm:space-x-2">
-                <div className="w-32 h-8  rounded-lg flex items-center justify-center">
+              <div className="flex items-center space-x-2">
+                <div className="w-32 h-8 rounded-lg flex items-center justify-center">
                   <img
-                    alt="conicet"
+                    alt="CEREGEO Logo"
                     src="https://ceregeo.github.io/Ceregeo/images/logoceregeo.png"
+                    className="dark:brightness-110"
                   />
                 </div>
-                <span className="text-lg sm:text-xl font-semibold text-gray-900 hidden xs:block">
+                <span className="text-lg sm:text-xl font-semibold text-foreground hidden sm:block">
                   CEREGEO
                 </span>
               </div>
@@ -222,19 +207,18 @@ export default function HomePage() {
             </div>
 
             {/* Controles derecha */}
-            <div className="flex items-center space-x-1 sm:space-x-3">
-              <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors hidden sm:block">
-                <Bell size={18} />
-              </button>
+            <div className="flex items-center space-x-1 sm:space-x-2">
+              <ThemeToggle />
               <UserMenu user={user} loading={loading} />
               <button
                 onClick={() => {
                   setRightSidebarOpen(!rightSidebarOpen);
                   if (isMobile && leftSidebarOpen) setLeftSidebarOpen(false);
                 }}
-                className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+                className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                aria-label="Toggle info panel"
               >
-                <Settings size={18} />
+                <Info size={20} />
               </button>
             </div>
           </div>
@@ -246,7 +230,7 @@ export default function HomePage() {
         {/* Overlay para mobile cuando hay sidebar abierto */}
         {isMobile && (leftSidebarOpen || rightSidebarOpen) && (
           <div
-            className="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-20 md:hidden"
             onClick={() => {
               setLeftSidebarOpen(false);
               setRightSidebarOpen(false);
@@ -256,26 +240,26 @@ export default function HomePage() {
 
         {/* Left Sidebar */}
         <div
-          className={`bg-white border-r border-gray-200 transition-all duration-300 z-30 ${
+          className={`bg-card border-r border-border transition-all duration-300 ease-out z-30 ${
             isMobile
               ? `fixed left-0 top-14 bottom-0 ${
                   leftSidebarOpen ? "w-80 max-w-[85vw]" : "w-0"
                 }`
               : leftSidebarOpen
-              ? "w-80"
-              : "w-0"
+                ? "w-80"
+                : "w-0"
           } overflow-hidden`}
         >
           <div className="h-full flex flex-col">
             {/* Sidebar Header */}
-            <div className="p-3 sm:p-4 border-b border-gray-200">
+            <div className="p-3 sm:p-4 border-b border-border">
               <div className="flex items-center justify-between">
-                <h2 className="text-base sm:text-lg font-semibold text-gray-900">
+                <h2 className="text-base sm:text-lg font-semibold text-foreground">
                   Panel de Control
                 </h2>
                 <button
                   onClick={() => setLeftSidebarOpen(false)}
-                  className="p-1 hover:bg-gray-100 rounded transition-colors"
+                  className="p-1.5 hover:bg-accent rounded-md transition-colors text-muted-foreground hover:text-foreground"
                 >
                   <X size={18} />
                 </button>
@@ -283,23 +267,22 @@ export default function HomePage() {
             </div>
 
             {/* Sidebar Navigation */}
-            <div className="border-b border-gray-200">
-              <nav className="flex space-x-0">
+            <div className="border-b border-border">
+              <nav className="flex">
                 {[
                   { id: "layers", icon: Layers, label: "Capas" },
                   { id: "search", icon: Search, label: "Buscar" },
-                  { id: "filter", icon: Filter, label: "Filtros" },
                 ].map((item) => (
                   <button
                     key={item.id}
                     onClick={() => setActiveSection(item.id)}
-                    className={`flex-1 flex flex-col sm:flex-row items-center justify-center space-y-1 sm:space-y-0 sm:space-x-2 px-2 sm:px-3 py-3 text-xs sm:text-sm font-medium transition-colors ${
+                    className={`flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 px-3 py-3 text-xs sm:text-sm font-medium transition-colors ${
                       activeSection === item.id
-                        ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50"
-                        : "text-gray-600 hover:text-gray-900"
+                        ? "text-primary border-b-2 border-primary bg-primary/5"
+                        : "text-muted-foreground hover:text-foreground hover:bg-accent"
                     }`}
                   >
-                    <item.icon size={16} className="sm:w-[18px] sm:h-[18px]" />
+                    <item.icon size={18} />
                     <span>{item.label}</span>
                   </button>
                 ))}
@@ -309,13 +292,13 @@ export default function HomePage() {
             {/* Sidebar Content */}
             <div className="flex-1 p-3 sm:p-4 overflow-y-auto">
               {activeSection === "layers" && (
-                <div className="space-y-3 sm:space-y-4">
+                <div className="space-y-4">
                   {user && (
-                    <div className="space-y-2 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+                    <div className="space-y-3 rounded-xl border border-border bg-card p-4 shadow-sm">
                       {/* Encabezado */}
                       <div className="flex items-center gap-2">
-                        <MapPin className="h-5 w-5 text-blue-600" />
-                        <h3 className="text-base font-semibold text-gray-900">
+                        <MapPin className="h-5 w-5 text-primary" />
+                        <h3 className="text-base font-semibold text-foreground">
                           Declarar ubicación
                         </h3>
                       </div>
@@ -331,206 +314,164 @@ export default function HomePage() {
                         />
                         <Label
                           htmlFor="ubicacion"
-                          className="text-sm text-gray-700 cursor-pointer"
+                          className="text-sm text-foreground cursor-pointer"
                         >
                           Habilitar selección en el mapa
                         </Label>
                       </div>
 
                       {/* Descripción */}
-                      <p className="text-sm text-gray-600 leading-relaxed">
-                        Si la opción está seleccionada, al hacer click en el
-                        mapa se obtendrán las coordenadas de ese punto y se
-                        abrirá un modal para cargar más datos.
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        Activa esta opción y haz click en el mapa para registrar
+                        tu ubicación.
                       </p>
                     </div>
                   )}
 
-                  <h3 className="font-medium text-gray-900 text-sm sm:text-base">
+                  <h3 className="font-medium text-foreground text-sm">
                     Capas Disponibles
                   </h3>
-                  {/* Layers Section */}
-                  <div className="flex-1 p-1 overflow-y-auto">
-                    {activeSection === "layers" && (
-                      <div className="space-y-4">
-                        {layers.map((layer, index) => (
-                          <div
-                            key={layer.id}
-                            className="p-3 bg-gray-50 rounded-lg border"
+
+                  {/* Layers List */}
+                  <div className="space-y-3">
+                    {layers.map((layer, index) => (
+                      <div
+                        key={layer.id}
+                        className="p-3 bg-muted/50 rounded-lg border border-border hover:bg-muted transition-colors"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={layer.visible}
+                              onChange={(e) =>
+                                toggleLayer(layer.id, e.target.checked)
+                              }
+                              className="rounded border-border text-primary focus:ring-primary w-4 h-4"
+                            />
+                            <span className="text-sm font-medium text-foreground">
+                              {layer.title}
+                            </span>
+                          </label>
+                        </div>
+
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-xs text-muted-foreground">
+                            Opacidad:
+                          </span>
+                          <input
+                            type="range"
+                            min="0"
+                            max="1"
+                            step="0.1"
+                            value={layer.opacity}
+                            onChange={(e) =>
+                              setOpacity(
+                                layer.id,
+                                Number.parseFloat(e.target.value),
+                              )
+                            }
+                            className="flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                          />
+                          <span className="text-xs text-muted-foreground w-10 text-right">
+                            {Math.round(layer.opacity * 100)}%
+                          </span>
+                        </div>
+
+                        {/* Flechas para mover capas */}
+                        <div className="flex justify-end gap-1">
+                          <button
+                            onClick={() => {
+                              if (index === 0) return;
+                              const newLayers = [...layers];
+                              [newLayers[index - 1], newLayers[index]] = [
+                                newLayers[index],
+                                newLayers[index - 1],
+                              ];
+                              reorderLayers(newLayers);
+                            }}
+                            disabled={index === 0}
+                            className="p-1.5 bg-secondary text-secondary-foreground rounded-md hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            aria-label="Mover arriba"
                           >
-                            <div className="flex items-center justify-between mb-2">
-                              <label className="flex items-center space-x-2">
-                                <input
-                                  type="checkbox"
-                                  checked={layer.visible}
-                                  onChange={(e) =>
-                                    toggleLayer(layer.id, e.target.checked)
-                                  }
-                                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4"
-                                />
-                                <span className="text-sm font-medium">
-                                  {layer.title}
-                                </span>
-                              </label>
-                            </div>
-
-                            <div className="flex items-center space-x-2 mb-2">
-                              <span className="text-xs text-gray-500">
-                                Opacidad:
-                              </span>
-                              <input
-                                type="range"
-                                min="0"
-                                max="1"
-                                step="0.1"
-                                value={layer.opacity}
-                                onChange={(e) =>
-                                  setOpacity(
-                                    layer.id,
-                                    Number.parseFloat(e.target.value)
-                                  )
-                                }
-                                className="flex-1 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                              />
-                              <span className="text-xs text-gray-500 w-10">
-                                {Math.round(layer.opacity * 100)}%
-                              </span>
-                            </div>
-
-                            {/* Flechas para mover capas */}
-                            <div className="flex justify-end space-x-1">
-                              <button
-                                onClick={() => {
-                                  if (index === 0) return; // no mover si ya es la primera
-                                  const newLayers = [...layers];
-                                  [newLayers[index - 1], newLayers[index]] = [
-                                    newLayers[index],
-                                    newLayers[index - 1],
-                                  ];
-                                  reorderLayers(newLayers);
-                                }}
-                                className="p-1 bg-gray-200 rounded hover:bg-gray-300"
-                              >
-                                ▲
-                              </button>
-                              <button
-                                onClick={() => {
-                                  if (index === layers.length - 1) return; // no mover si ya es la última
-                                  const newLayers = [...layers];
-                                  [newLayers[index], newLayers[index + 1]] = [
-                                    newLayers[index + 1],
-                                    newLayers[index],
-                                  ];
-                                  reorderLayers(newLayers);
-                                }}
-                                className="p-1 bg-gray-200 rounded hover:bg-gray-300"
-                              >
-                                ▼
-                              </button>
-                            </div>
-                          </div>
-                        ))}
+                            <ChevronUp size={14} />
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (index === layers.length - 1) return;
+                              const newLayers = [...layers];
+                              [newLayers[index], newLayers[index + 1]] = [
+                                newLayers[index + 1],
+                                newLayers[index],
+                              ];
+                              reorderLayers(newLayers);
+                            }}
+                            disabled={index === layers.length - 1}
+                            className="p-1.5 bg-secondary text-secondary-foreground rounded-md hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            aria-label="Mover abajo"
+                          >
+                            <ChevronDown size={14} />
+                          </button>
+                        </div>
                       </div>
-                    )}
+                    ))}
                   </div>
                 </div>
               )}
 
               {activeSection === "search" && (
-                <>
-                  <div className="space-y-3 sm:space-y-4">
-                    <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
-                      <h3 className="font-medium text-gray-900 text-sm sm:text-base mb-2">
-                        Búsqueda de Estudiantes Cercanos
+                <div className="space-y-4">
+                  {/* Búsqueda de estudiantes cercanos */}
+                  <div className="p-4 bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl border border-primary/20">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Users className="h-5 w-5 text-primary" />
+                      <h3 className="font-semibold text-foreground">
+                        Estudiantes Cercanos
                       </h3>
-                      <p className="text-xs text-gray-600 mb-3">
-                        Selecciona un punto en el mapa y haz clic en el botón
-                        para encontrar estudiantes cercanos.
-                      </p>
-                      <Button
-                        className="w-full"
-                        onClick={buscarEstudiantesCercanos}
-                        disabled={
-                          !featureValues?.coord_x || !featureValues?.coord_y
-                        }
-                      >
-                        <Search className="mr-2 h-4 w-4" />
-                        Buscar estudiantes cercanos
-                      </Button>
-                      {!featureValues?.coord_x && (
-                        <div className="mt-3 p-2 bg-orange-50 border border-orange-200 rounded-md flex items-start gap-2">
-                          <span className="text-orange-500 mt-0.5">⚠️</span>
-                          <p className="text-xs text-orange-700 flex-1">
-                            Selecciona una ubicación en el mapa primero haciendo
-                            clic en cualquier punto.
-                          </p>
-                        </div>
-                      )}
                     </div>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Selecciona un punto en el mapa para buscar estudiantes en
+                      esa zona.
+                    </p>
+                    <Button
+                      className="w-full"
+                      onClick={buscarEstudiantesCercanos}
+                      disabled={
+                        !featureValues?.coord_x || !featureValues?.coord_y
+                      }
+                    >
+                      <Search className="mr-2 h-4 w-4" />
+                      Buscar cercanos
+                    </Button>
+                    {!featureValues?.coord_x && (
+                      <div className="mt-3 p-2.5 bg-orange-500/10 border border-orange-500/20 rounded-lg flex items-start gap-2">
+                        <Info className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" />
+                        <p className="text-xs text-orange-600 dark:text-orange-400">
+                          Primero haz clic en un punto del mapa.
+                        </p>
+                      </div>
+                    )}
                   </div>
-                  <div className="space-y-3 sm:space-y-4">
-                    <h3 className="font-medium text-gray-900 text-sm sm:text-base">
+
+                  {/* Búsqueda de ubicación */}
+                  <div className="space-y-3">
+                    <h3 className="font-medium text-foreground text-sm">
                       Buscar Ubicación
                     </h3>
                     <div className="relative">
                       <Search
-                        className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                        className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"
                         size={16}
                       />
                       <input
                         type="text"
                         placeholder="Buscar lugares, coordenadas..."
-                        className="w-full pl-9 sm:pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full pl-10 pr-4 py-2.5 text-sm bg-background border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-primary placeholder:text-muted-foreground"
                       />
                     </div>
-                    <div className="space-y-2">
-                      <h4 className="text-xs sm:text-sm font-medium text-gray-700">
-                        Búsquedas Recientes
-                      </h4>
-                      {["Buenos Aires", "Córdoba", "Mendoza"].map(
-                        (place, index) => (
-                          <button
-                            key={index}
-                            className="w-full text-left px-3 py-2 text-xs sm:text-sm text-gray-600 hover:bg-gray-50 rounded transition-colors"
-                          >
-                            {place}
-                          </button>
-                        )
-                      )}
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {activeSection === "filter" && (
-                <div className="space-y-3 sm:space-y-4">
-                  <h3 className="font-medium text-gray-900 text-sm sm:text-base">
-                    Filtros de Datos
-                  </h3>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                        Región
-                      </label>
-                      <select className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        <option>Todas las regiones</option>
-                        <option>Buenos Aires</option>
-                        <option>Córdoba</option>
-                        <option>Santa Fe</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                        Período
-                      </label>
-                      <input
-                        type="date"
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      />
-                    </div>
-                    <button className="w-full bg-blue-600 text-white py-2 px-4 text-sm rounded-lg hover:bg-blue-700 transition-colors">
-                      Aplicar Filtros
-                    </button>
+                    <p className="text-xs text-muted-foreground">
+                      Próximamente: búsqueda por geocoding.
+                    </p>
                   </div>
                 </div>
               )}
@@ -539,26 +480,25 @@ export default function HomePage() {
         </div>
 
         {/* Map Container */}
-        <div className="flex-1 relative bg-gray-100">
-          <main className="h-full flex gap-4 bg-gray-100">
-            <div className="w-full">
-              <Mapa />
-            </div>
+        <div className="flex-1 relative bg-muted">
+          <main className="h-full">
+            <Mapa />
           </main>
 
           {/* Map Controls */}
-          <div className="absolute top-4 right-4 space-y-2">
-            <button className="bg-white p-2 rounded-lg shadow hover:shadow-md transition-shadow">
-              <Download size={16} className="sm:w-[18px] sm:h-[18px]" />
+          <div className="absolute top-4 right-4 flex flex-col gap-2">
+            <button
+              className="bg-card p-2.5 rounded-lg shadow-md hover:shadow-lg border border-border text-muted-foreground hover:text-foreground transition-all"
+              title="Descargar mapa"
+            >
+              <Download size={18} />
             </button>
-            <button className="bg-white p-2 rounded-lg shadow hover:shadow-md transition-shadow">
-              <Share size={16} className="sm:w-[18px] sm:h-[18px]" />
+            <button
+              className="bg-card p-2.5 rounded-lg shadow-md hover:shadow-lg border border-border text-muted-foreground hover:text-foreground transition-all"
+              title="Compartir"
+            >
+              <Share2 size={18} />
             </button>
-          </div>
-
-          {/* Map Scale/Info */}
-          <div className="cursor-pointer absolute bottom-4 left-4 bg-white px-2 sm:px-3 py-1 sm:py-2 rounded-lg shadow text-xs sm:text-sm hover:bg-blue-300">
-            <InfoIcon />
           </div>
 
           {/* Mobile Bottom Panel Toggle */}
@@ -566,12 +506,12 @@ export default function HomePage() {
             <div className="absolute bottom-4 right-4">
               <button
                 onClick={() => setMobileBottomPanelOpen(!mobileBottomPanelOpen)}
-                className="bg-white p-3 rounded-full shadow-lg hover:shadow-xl transition-shadow"
+                className="bg-card p-3 rounded-full shadow-lg hover:shadow-xl transition-shadow border border-border"
               >
                 {mobileBottomPanelOpen ? (
-                  <ChevronDown size={20} />
+                  <ChevronDown size={20} className="text-foreground" />
                 ) : (
-                  <ChevronUp size={20} />
+                  <ChevronUp size={20} className="text-foreground" />
                 )}
               </button>
             </div>
@@ -580,7 +520,7 @@ export default function HomePage() {
           {/* Mobile Bottom Panel */}
           {isMobile && (
             <div
-              className={`absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 transition-transform duration-300 ${
+              className={`absolute bottom-0 left-0 right-0 bg-card border-t border-border transition-transform duration-300 ${
                 mobileBottomPanelOpen
                   ? "transform translate-y-0"
                   : "transform translate-y-full"
@@ -589,21 +529,21 @@ export default function HomePage() {
               <div className="p-4 max-h-60 overflow-y-auto">
                 <div className="space-y-4">
                   <div>
-                    <h3 className="font-medium text-gray-900 mb-2">
-                      Información Rápida
+                    <h3 className="font-medium text-foreground mb-2">
+                      Coordenadas seleccionadas
                     </h3>
                     <div className="grid grid-cols-2 gap-2">
-                      <div className="bg-blue-50 p-2 rounded-lg text-center">
-                        <div className="text-lg font-bold text-blue-600">
-                          1.2M
+                      <div className="bg-primary/10 p-2 rounded-lg text-center">
+                        <div className="text-lg font-bold text-primary font-mono">
+                          {lat?.toFixed(4) || "--"}
                         </div>
-                        <div className="text-xs text-blue-700">Población</div>
+                        <div className="text-xs text-primary/70">Latitud</div>
                       </div>
-                      <div className="bg-green-50 p-2 rounded-lg text-center">
-                        <div className="text-lg font-bold text-green-600">
-                          85%
+                      <div className="bg-primary/10 p-2 rounded-lg text-center">
+                        <div className="text-lg font-bold text-primary font-mono">
+                          {lon?.toFixed(4) || "--"}
                         </div>
-                        <div className="text-xs text-green-700">Cobertura</div>
+                        <div className="text-xs text-primary/70">Longitud</div>
                       </div>
                     </div>
                   </div>
@@ -615,26 +555,26 @@ export default function HomePage() {
 
         {/* Right Sidebar */}
         <div
-          className={`bg-white border-l border-gray-200 transition-all duration-300 z-30 ${
+          className={`bg-card border-l border-border transition-all duration-300 ease-out z-30 ${
             isMobile
               ? `fixed right-0 top-14 bottom-0 ${
                   rightSidebarOpen ? "w-80 max-w-[85vw]" : "w-0"
                 }`
               : rightSidebarOpen
-              ? "w-96"
-              : "w-0"
+                ? "w-96"
+                : "w-0"
           } overflow-hidden`}
         >
           <div className="h-full flex flex-col">
             {/* Sidebar Header */}
-            <div className="p-3 sm:p-4 border-b border-gray-200">
+            <div className="p-3 sm:p-4 border-b border-border">
               <div className="flex items-center justify-between">
-                <h2 className="text-base sm:text-lg font-semibold text-gray-900">
+                <h2 className="text-base sm:text-lg font-semibold text-foreground">
                   Información
                 </h2>
                 <button
                   onClick={() => setRightSidebarOpen(false)}
-                  className="p-1 hover:bg-gray-100 rounded transition-colors"
+                  className="p-1.5 hover:bg-accent rounded-md transition-colors text-muted-foreground hover:text-foreground"
                 >
                   <X size={18} />
                 </button>
@@ -642,56 +582,68 @@ export default function HomePage() {
             </div>
 
             {/* Properties Panel */}
-            <div className="flex-1 p-3 sm:p-4 overflow-y-auto space-y-4 sm:space-y-6">
+            <div className="flex-1 p-3 sm:p-4 overflow-y-auto space-y-4">
               {/* Resultados de estudiantes cercanos */}
               {nearbyResults.length > 0 && (
-                <div className="border border-blue-200 rounded-lg p-4 bg-blue-50">
-                  <h3 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
-                    <MapPin className="h-5 w-5" />
+                <div className="border border-primary/20 rounded-xl p-4 bg-primary/5">
+                  <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                    <Users className="h-5 w-5 text-primary" />
                     Estudiantes Cercanos ({nearbyResults.length})
                   </h3>
                   <div className="space-y-2">
                     {nearbyResults.map((estudiante, idx) => (
                       <div
                         key={estudiante.id || idx}
-                        className="bg-white p-3 rounded border border-blue-100 shadow-sm hover:shadow-md transition-shadow"
+                        className="bg-card p-3 rounded-lg border border-border shadow-sm hover:shadow-md transition-shadow"
                       >
-                        <p className="font-medium text-gray-900">
+                        <p className="font-medium text-foreground">
                           {estudiante.nombre_completo}
                         </p>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-muted-foreground">
                           Distancia: {(estudiante.distancia / 1000).toFixed(2)}{" "}
                           km
                         </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          Lat: {estudiante.lat.toFixed(6)}, Lon:{" "}
+                        <p className="text-xs text-muted-foreground/70 mt-1 font-mono">
+                          {estudiante.lat.toFixed(6)},{" "}
                           {estudiante.lon.toFixed(6)}
                         </p>
                       </div>
                     ))}
                   </div>
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={limpiarResultadosCercanos}
-                    className="mt-3 w-full text-sm text-blue-600 hover:text-blue-800 underline"
+                    className="mt-3 w-full text-primary hover:text-primary"
                   >
                     Limpiar resultados
-                  </button>
+                  </Button>
                 </div>
               )}
 
-              <p className="text-gray-500">
-                Haz clic en una región para ver resultados
-              </p>
+              {/* Empty state */}
+              {!featureValues && nearbyResults.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                    <MapPin className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                  <p className="text-muted-foreground text-sm">
+                    Haz clic en un punto del mapa para ver información
+                  </p>
+                </div>
+              )}
+
               {featureValues && (
-                <div>
-                  <p className="font-bold">Objeto seleccionado</p>
-                  <pre className="text-wrap text-xs bg-gray-100 p-2 rounded">
-                    {/* Creamos una copia del objeto para no modificar el original */}
+                <div className="space-y-3">
+                  <h3 className="font-medium text-foreground text-sm">
+                    Objeto seleccionado
+                  </h3>
+                  <pre className="text-wrap text-xs bg-muted p-3 rounded-lg overflow-x-auto font-mono text-foreground">
                     {JSON.stringify(
                       featureValues,
                       (key, value) =>
                         excludeKeys.has(key) ? undefined : value,
-                      2
+                      2,
                     )}
                   </pre>
                 </div>
@@ -703,24 +655,24 @@ export default function HomePage() {
 
       <LocationModal />
 
-      {/* Footer - Oculto en mobile */}
-      <footer className="bg-white border-t border-gray-200 px-3 sm:px-4 py-2 sm:py-3 hidden sm:block">
-        <div className="flex flex-col sm:flex-row items-center justify-between text-xs sm:text-sm text-gray-600 space-y-2 sm:space-y-0">
-          <div className="flex items-center space-x-2 sm:space-x-4">
-            <span>© 2025 GeoAnalytics</span>
-            <a href="#" className="hover:text-gray-900 transition-colors">
+      {/* Footer */}
+      <footer className="bg-card border-t border-border px-4 py-2 hidden md:block">
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <div className="flex items-center gap-4">
+            <span>© 2026 CEREGEO</span>
+            <a href="#" className="hover:text-foreground transition-colors">
               Términos
             </a>
-            <a href="#" className="hover:text-gray-900 transition-colors">
+            <a href="#" className="hover:text-foreground transition-colors">
               Privacidad
             </a>
           </div>
-          <div className="flex items-center space-x-2 sm:space-x-4">
-            <span className="hidden md:block">
-              Coordenadas: {lon}, {lat}
+          <div className="flex items-center gap-4">
+            <span className="font-mono">
+              {lat?.toFixed(6) || "--"}, {lon?.toFixed(6) || "--"}
             </span>
-            <span className="flex items-center space-x-1">
-              <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+            <span className="flex items-center gap-1.5">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
               <span>Conectado</span>
             </span>
           </div>

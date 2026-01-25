@@ -47,7 +47,7 @@ export default function UserMenu({ user, loading }: Readonly<UserMenuProps>) {
 
   if (loading) {
     return (
-      <div className="w-8 h-8 border-2 border-gray-200 border-t-gray-600 rounded-full animate-spin"></div>
+      <div className="w-8 h-8 border-2 border-border border-t-primary rounded-full animate-spin"></div>
     );
   }
 
@@ -55,7 +55,7 @@ export default function UserMenu({ user, loading }: Readonly<UserMenuProps>) {
     return (
       <button
         onClick={handleLogin}
-        className="cursor-pointer flex items-center space-x-1 sm:space-x-2 px-3 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors"
+        className="cursor-pointer flex items-center space-x-1 sm:space-x-2 px-3 py-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg transition-colors"
       >
         <UserIcon size={16} className="sm:w-[18px] sm:h-[18px]" />
         <span className="hidden sm:block text-sm font-medium">
@@ -69,7 +69,7 @@ export default function UserMenu({ user, loading }: Readonly<UserMenuProps>) {
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+        className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-2 text-foreground hover:bg-accent rounded-lg transition-colors"
       >
         <div className="flex items-center space-x-2">
           {user.user_metadata?.avatar_url ? (
@@ -79,7 +79,7 @@ export default function UserMenu({ user, loading }: Readonly<UserMenuProps>) {
               className="w-6 h-6 rounded-full object-cover"
             />
           ) : (
-            <div className="w-6 h-6 bg-gray-300 rounded-full flex items-center justify-center">
+            <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center text-muted-foreground">
               <UserIcon size={14} />
             </div>
           )}
@@ -89,38 +89,40 @@ export default function UserMenu({ user, loading }: Readonly<UserMenuProps>) {
         </div>
         <ChevronDown
           size={14}
-          className={`hidden sm:block transition-transform ${
+          className={`hidden sm:block transition-transform text-muted-foreground ${
             isOpen ? "rotate-180" : ""
           }`}
         />
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+        <div className="absolute right-0 mt-2 w-56 bg-card rounded-lg shadow-lg border border-border z-50">
           <div className="py-1">
             {/* Información del usuario */}
-            <div className="px-4 py-3 border-b border-gray-100">
-              <div className="font-medium text-gray-900">
+            <div className="px-4 py-3 border-b border-border">
+              <div className="font-medium text-foreground">
                 {user.user_metadata?.full_name || "Usuario"}
               </div>
-              <div className="text-sm text-gray-500 truncate">{user.email}</div>
+              <div className="text-sm text-muted-foreground truncate">
+                {user.email}
+              </div>
             </div>
 
             {/* Opciones del menú */}
-            <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2">
-              <UserProfile size={16} />
+            <button className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-accent flex items-center gap-2 transition-colors">
+              <UserProfile size={16} className="text-muted-foreground" />
               <span>Mi perfil</span>
             </button>
 
-            <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2">
-              <Settings size={16} />
+            <button className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-accent flex items-center gap-2 transition-colors">
+              <Settings size={16} className="text-muted-foreground" />
               <span>Configuración</span>
             </button>
 
-            <div className="border-t border-gray-100 mt-1">
+            <div className="border-t border-border mt-1">
               <button
                 onClick={handleLogout}
-                className="cursor-pointer w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2"
+                className="cursor-pointer w-full text-left px-4 py-2 text-sm text-destructive hover:bg-destructive/10 flex items-center gap-2 transition-colors"
               >
                 <LogOut size={16} />
                 <span>Cerrar sesión</span>
