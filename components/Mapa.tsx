@@ -90,7 +90,7 @@ export default function Mapa() {
       const layers = useMapStore.getState().layers;
       // Validar si ya existe una layer similar, eliminarla para evitar duplicados
       const existingIndex = layers.findIndex(
-        (l) => l.id === "ubicacion_estudiante"
+        (l) => l.id === "ubicacion_estudiante",
       );
       if (existingIndex !== -1) {
         const existingLayer = layers[existingIndex].layer;
@@ -123,7 +123,7 @@ export default function Mapa() {
   const createPopupContent = (
     values: FeatureValues,
     popupElement: HTMLElement,
-    popupOverlay: Overlay
+    popupOverlay: Overlay,
   ) => {
     const featureId = values.id || values.gid || values.objectid || "unknown";
     const featureName = (values.nombre as string) || "Región Seleccionada";
@@ -163,7 +163,7 @@ export default function Mapa() {
                 }:</span>
                 <span class="popup-value">${val || "N/A"}</span>
               </div>
-            `
+            `,
             )
             .join("")}
         </div>
@@ -176,9 +176,9 @@ export default function Mapa() {
           <button 
             class="popup-btn popup-btn-delete" 
             onclick="window.mapInstance?.handleEliminar('${featureId}', '${featureName.replace(
-                /'/g,
-                "\\'"
-              )}')"
+              /'/g,
+              "\\'",
+            )}')"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="3,6 5,6 21,6"></polyline>
@@ -287,7 +287,7 @@ export default function Mapa() {
                   fill: new Fill({ color: "rgba(255, 0, 0, 0.5)" }), // Relleno rojo transparente
                   stroke: new Stroke({ color: "red", width: 2 }), // Borde rojo
                 }),
-              })
+              }),
             );
           }
           // Estilo para Líneas (LineString, MultiLineString)
@@ -301,7 +301,7 @@ export default function Mapa() {
                   color: "blue", // Color de línea azul
                   width: 5,
                 }),
-              })
+              }),
             );
           }
           // Estilo para Polígonos y otras geometrías
@@ -315,7 +315,7 @@ export default function Mapa() {
                 fill: new Fill({
                   color: "rgba(255, 255, 0, 0.2)", // Relleno amarillo transparente
                 }),
-              })
+              }),
             );
           }
           return styles;
@@ -380,7 +380,7 @@ export default function Mapa() {
             popupElement.innerHTML = createPopupContent(
               values,
               popupElement,
-              popupOverlay
+              popupOverlay,
             );
             popupElement.style.display = "block";
             popupElement.classList.remove("hidden");
@@ -420,7 +420,11 @@ export default function Mapa() {
         }
         setFeatureValues(values);
       } else {
-        setModalOpen(true);
+        // Solo abrir modal si checkUbicacion está activo
+        const { checkUbicacion } = useMapStore.getState();
+        if (checkUbicacion) {
+          setModalOpen(true);
+        }
       }
     });
 
@@ -474,7 +478,7 @@ export default function Mapa() {
 
         // Validar si ya existe una layer similar, eliminarla para evitar duplicados
         const existingIndex = layers.findIndex(
-          (l) => l.id === "ubicacion_estudiante"
+          (l) => l.id === "ubicacion_estudiante",
         );
         if (existingIndex !== -1) {
           const existingLayer = layers[existingIndex].layer;
@@ -509,23 +513,22 @@ export default function Mapa() {
         <div ref={mapRef} className="w-full h-full" />
         <div
           id="popup"
-          className="absolute bg-white text-gray-800 rounded-2xl shadow-2xl border border-gray-100 hidden z-50 min-w-[300px] max-w-[420px]"
-          style={{
-            backdropFilter: "blur(20px)",
-            backgroundColor: "rgba(255, 255, 255, 0.98)",
-          }}
+          className="absolute rounded-2xl shadow-2xl hidden z-50 min-w-[300px] max-w-[420px] bg-card text-card-foreground border border-border"
         />
       </div>
 
-      {/* Estilos CSS integrados */}
+      {/* Estilos CSS integrados con soporte para dark mode */}
       <style jsx global>{`
         .popup-container {
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-            sans-serif;
+          font-family:
+            -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
           overflow: hidden;
           border-radius: 16px;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3),
-            0 0 0 1px rgba(0, 0, 0, 0.1);
+          background: hsl(var(--card));
+          color: hsl(var(--card-foreground));
+          box-shadow:
+            0 20px 60px rgba(0, 0, 0, 0.2),
+            0 0 0 1px hsl(var(--border));
         }
 
         .popup-header {
@@ -533,25 +536,27 @@ export default function Mapa() {
           justify-content: space-between;
           align-items: center;
           padding: 18px 24px 14px 24px;
-          border-bottom: 1px solid #e5e7eb;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          border-bottom: 1px solid hsl(var(--border));
+          background: hsl(var(--primary));
+          position: relative;
+          overflow: hidden;
         }
 
         .popup-title {
           font-size: 17px;
           font-weight: 700;
-          color: #ffffff;
+          color: hsl(var(--primary-foreground));
           margin: 0;
           line-height: 1.4;
           max-width: 220px;
           word-break: break-word;
-          text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
         }
 
         .popup-close {
           background: rgba(255, 255, 255, 0.2);
           border: none;
-          color: #ffffff;
+          color: hsl(var(--primary-foreground));
           cursor: pointer;
           padding: 6px;
           border-radius: 8px;
@@ -560,7 +565,6 @@ export default function Mapa() {
           align-items: center;
           justify-content: center;
           flex-shrink: 0;
-          backdrop-filter: blur(10px);
         }
 
         .popup-close:hover {
@@ -572,11 +576,11 @@ export default function Mapa() {
           max-height: 320px;
           overflow-y: auto;
           padding: 20px 24px 24px 24px;
-          background: #ffffff;
+          background: hsl(var(--card));
 
           /* Scroll elegante */
           scrollbar-width: thin;
-          scrollbar-color: #cbd5e1 transparent;
+          scrollbar-color: hsl(var(--border)) transparent;
         }
 
         .popup-content::-webkit-scrollbar {
@@ -590,13 +594,13 @@ export default function Mapa() {
         }
 
         .popup-content::-webkit-scrollbar-thumb {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: hsl(var(--primary));
           border-radius: 3px;
           transition: all 0.2s ease;
         }
 
         .popup-content::-webkit-scrollbar-thumb:hover {
-          background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+          background: hsl(var(--primary) / 0.8);
         }
 
         .popup-item {
@@ -608,11 +612,11 @@ export default function Mapa() {
           margin-bottom: 6px;
           gap: 16px;
           transition: all 0.2s ease;
-          background: #f8fafc;
+          background: hsl(var(--muted));
         }
 
         .popup-item:hover {
-          background: #f1f5f9;
+          background: hsl(var(--accent));
           transform: translateX(4px);
         }
 
@@ -621,19 +625,18 @@ export default function Mapa() {
         }
 
         .popup-label {
-          font-size: 13px;
+          font-size: 11px;
           font-weight: 600;
-          color: #64748b;
+          color: hsl(var(--muted-foreground));
           flex-shrink: 0;
           min-width: 90px;
           text-transform: uppercase;
-          font-size: 11px;
           letter-spacing: 0.5px;
         }
 
         .popup-value {
           font-size: 14px;
-          color: #1e293b;
+          color: hsl(var(--foreground));
           text-align: right;
           word-break: break-word;
           line-height: 1.5;
@@ -665,7 +668,7 @@ export default function Mapa() {
           height: 0;
           border-top: 12px solid transparent;
           border-bottom: 12px solid transparent;
-          border-right: 12px solid #667eea;
+          border-right: 12px solid hsl(var(--primary));
           filter: drop-shadow(-2px 0 4px rgba(0, 0, 0, 0.1));
         }
 
@@ -679,7 +682,7 @@ export default function Mapa() {
           height: 0;
           border-top: 10px solid transparent;
           border-bottom: 10px solid transparent;
-          border-right: 10px solid #ffffff;
+          border-right: 10px solid hsl(var(--card));
         }
 
         /* Botones de acción mejorados */
@@ -687,8 +690,8 @@ export default function Mapa() {
           display: flex;
           gap: 10px;
           padding: 18px 24px;
-          border-top: 1px solid #e5e7eb;
-          background: linear-gradient(180deg, #f9fafb 0%, #f1f5f9 100%);
+          border-top: 1px solid hsl(var(--border));
+          background: hsl(var(--muted));
           border-bottom-left-radius: 16px;
           border-bottom-right-radius: 16px;
         }
@@ -719,9 +722,11 @@ export default function Mapa() {
           width: 0;
           height: 0;
           border-radius: 50%;
-          background: rgba(255, 255, 255, 0.3);
+          background: rgba(255, 255, 255, 0.2);
           transform: translate(-50%, -50%);
-          transition: width 0.6s, height 0.6s;
+          transition:
+            width 0.6s,
+            height 0.6s;
         }
 
         .popup-btn:hover::before {
@@ -730,14 +735,14 @@ export default function Mapa() {
         }
 
         .popup-btn-edit {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
-          box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+          background: hsl(var(--primary));
+          color: hsl(var(--primary-foreground));
+          box-shadow: 0 4px 15px hsl(var(--primary) / 0.3);
         }
 
         .popup-btn-edit:hover {
           transform: translateY(-2px);
-          box-shadow: 0 6px 25px rgba(102, 126, 234, 0.5);
+          box-shadow: 0 6px 25px hsl(var(--primary) / 0.4);
         }
 
         .popup-btn-edit:active {
@@ -745,14 +750,14 @@ export default function Mapa() {
         }
 
         .popup-btn-delete {
-          background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-          color: white;
-          box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
+          background: hsl(var(--destructive));
+          color: hsl(var(--destructive-foreground));
+          box-shadow: 0 4px 15px hsl(var(--destructive) / 0.3);
         }
 
         .popup-btn-delete:hover {
           transform: translateY(-2px);
-          box-shadow: 0 6px 25px rgba(245, 87, 108, 0.5);
+          box-shadow: 0 6px 25px hsl(var(--destructive) / 0.4);
         }
 
         .popup-btn-delete:active {
@@ -760,14 +765,14 @@ export default function Mapa() {
         }
 
         .popup-btn-close {
-          background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
-          color: white;
-          box-shadow: 0 4px 15px rgba(75, 85, 99, 0.4);
+          background: hsl(var(--secondary));
+          color: hsl(var(--secondary-foreground));
+          box-shadow: 0 4px 15px hsl(var(--secondary) / 0.3);
         }
 
         .popup-btn-close:hover {
           transform: translateY(-2px);
-          box-shadow: 0 6px 25px rgba(75, 85, 99, 0.5);
+          box-shadow: 0 6px 25px hsl(var(--secondary) / 0.4);
         }
 
         .popup-btn-close:active {
@@ -814,10 +819,24 @@ export default function Mapa() {
         }
 
         /* Responsive mejorado */
-        @media (max-width: 480px) {
+        @media (max-width: 640px) {
           #popup {
-            min-width: 280px !important;
-            max-width: 320px !important;
+            min-width: 260px !important;
+            max-width: calc(100vw - 40px) !important;
+            position: fixed !important;
+            left: 50% !important;
+            top: 50% !important;
+            transform: translate(-50%, -50%) scale(0.9) !important;
+          }
+
+          #popup.popup-show {
+            transform: translate(-50%, -50%) scale(1) !important;
+          }
+
+          /* Ocultar flechas en móvil */
+          #popup::before,
+          #popup::after {
+            display: none;
           }
 
           .popup-header {
@@ -831,7 +850,7 @@ export default function Mapa() {
 
           .popup-content {
             padding: 16px 18px 18px 18px;
-            max-height: 260px;
+            max-height: 50vh;
           }
 
           .popup-actions {

@@ -41,7 +41,7 @@ const schema = z
     {
       message: "Localidad es obligatoria para Argentina",
       path: ["localidad"],
-    }
+    },
   )
   .refine(
     (data) => {
@@ -53,7 +53,7 @@ const schema = z
     {
       message: "Especificar tipo es obligatorio",
       path: ["tipoUniOtro"],
-    }
+    },
   );
 
 export default function LocationModal() {
@@ -154,21 +154,31 @@ export default function LocationModal() {
 
   return (
     <Dialog open={modalOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg w-[95vw] sm:w-full max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Ubicación seleccionada</DialogTitle>
+          <DialogTitle className="text-lg sm:text-xl">
+            Ubicación seleccionada
+          </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={onSubmit}>
           <div className="space-y-4">
             {/* Coordenadas */}
-            <div className="text-sm text-gray-700">
-              <p>
-                <b>Latitud:</b> {lat?.toFixed(6)}
-              </p>
-              <p>
-                <b>Longitud:</b> {lon?.toFixed(6)}
-              </p>
+            <div className="text-sm text-muted-foreground p-3 bg-muted rounded-lg">
+              <div className="flex items-center gap-4">
+                <p>
+                  <span className="font-semibold text-foreground">
+                    Latitud:
+                  </span>{" "}
+                  <span className="font-mono">{lat?.toFixed(6)}</span>
+                </p>
+                <p>
+                  <span className="font-semibold text-foreground">
+                    Longitud:
+                  </span>{" "}
+                  <span className="font-mono">{lon?.toFixed(6)}</span>
+                </p>
+              </div>
             </div>
 
             <div>
@@ -179,7 +189,11 @@ export default function LocationModal() {
                   <SelectPais value={field.value} onChange={field.onChange} />
                 )}
               />
-              <p className="text-red-500 text-sm">{errors.pais?.message}</p>
+              {errors.pais?.message && (
+                <p className="text-destructive text-sm mt-1">
+                  {errors.pais.message}
+                </p>
+              )}
             </div>
 
             {/* Localidad dinámica */}
@@ -195,9 +209,11 @@ export default function LocationModal() {
                     />
                   )}
                 />
-                <p className="text-red-500 text-sm">
-                  {errors.localidad?.message}
-                </p>
+                {errors.localidad?.message && (
+                  <p className="text-destructive text-sm mt-1">
+                    {errors.localidad.message}
+                  </p>
+                )}
               </div>
             )}
 
@@ -206,8 +222,16 @@ export default function LocationModal() {
                 setFacultad={(value) => setValue("facultad", value)}
                 setCarrera={(value) => setValue("carrera", value)}
               />
-              <p className="text-red-500 text-sm">{errors.facultad?.message}</p>
-              <p className="text-red-500 text-sm">{errors.carrera?.message}</p>
+              {errors.facultad?.message && (
+                <p className="text-destructive text-sm mt-1">
+                  {errors.facultad.message}
+                </p>
+              )}
+              {errors.carrera?.message && (
+                <p className="text-destructive text-sm mt-1">
+                  {errors.carrera.message}
+                </p>
+              )}
             </div>
 
             <div>
@@ -221,7 +245,11 @@ export default function LocationModal() {
                   />
                 )}
               />
-              <p className="text-red-500 text-sm">{errors.tipoUni?.message}</p>
+              {errors.tipoUni?.message && (
+                <p className="text-destructive text-sm mt-1">
+                  {errors.tipoUni.message}
+                </p>
+              )}
             </div>
 
             {watchedTipoUni === "Otro" && (
@@ -238,9 +266,11 @@ export default function LocationModal() {
                     />
                   )}
                 />
-                <p className="text-red-500 text-sm">
-                  {errors.tipoUniOtro?.message}
-                </p>
+                {errors.tipoUniOtro?.message && (
+                  <p className="text-destructive text-sm mt-1">
+                    {errors.tipoUniOtro.message}
+                  </p>
+                )}
               </div>
             )}
 
@@ -258,9 +288,11 @@ export default function LocationModal() {
                   />
                 )}
               />
-              <p className="text-red-500 text-sm">
-                {errors.profesion?.message}
-              </p>
+              {errors.profesion?.message && (
+                <p className="text-destructive text-sm mt-1">
+                  {errors.profesion.message}
+                </p>
+              )}
             </div>
 
             {/* Botones */}

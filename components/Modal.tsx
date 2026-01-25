@@ -29,7 +29,7 @@ export default function Modal({
         onClose();
       }
     },
-    [onClose, closeOnEscape]
+    [onClose, closeOnEscape],
   );
 
   // Efecto para manejar la tecla Escape y bloquear scroll
@@ -82,10 +82,10 @@ export default function Modal({
       <div
         className={`
           relative w-full ${sizeClasses[size]} transform
-          bg-white rounded-2xl shadow-2xl
+          bg-card text-card-foreground rounded-2xl shadow-2xl
           transition-all duration-300 ease-out
           animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-4
-          border border-gray-200/50
+          border border-border
         `}
       >
         {/* Header del modal */}
@@ -94,7 +94,7 @@ export default function Modal({
             {title && (
               <h2
                 id="modal-title"
-                className="text-xl font-semibold text-gray-900 leading-6"
+                className="text-xl font-semibold text-foreground leading-6"
               >
                 {title}
               </h2>
@@ -103,9 +103,9 @@ export default function Modal({
               <button
                 onClick={onClose}
                 className="
-                  p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100
+                  p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent
                   transition-all duration-200 ease-in-out
-                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                  focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-card
                 "
                 aria-label="Cerrar modal"
                 type="button"
