@@ -16,6 +16,7 @@ import {
   Users,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { SearchLocation } from "@/components/SearchLocation";
 import { LayerData, useMapStore } from "@/store/mapStore";
 import { NavigationMenuOptions } from "@/components/NavigationMenu";
 import { useAuth } from "@/hooks/useAuth";
@@ -458,19 +459,9 @@ export default function HomePage() {
                     <h3 className="font-medium text-foreground text-sm">
                       Buscar Ubicación
                     </h3>
-                    <div className="relative">
-                      <Search
-                        className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"
-                        size={16}
-                      />
-                      <input
-                        type="text"
-                        placeholder="Buscar lugares, coordenadas..."
-                        className="w-full pl-10 pr-4 py-2.5 text-sm bg-background border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-primary placeholder:text-muted-foreground"
-                      />
-                    </div>
+                    <SearchLocation placeholder="Buscar ciudad, dirección..." />
                     <p className="text-xs text-muted-foreground">
-                      Próximamente: búsqueda por geocoding.
+                      Escribe al menos 3 caracteres para buscar
                     </p>
                   </div>
                 </div>
