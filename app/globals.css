@@ -196,66 +196,112 @@
 
 /* ===== POPUP STYLES ===== */
 
-.popup-container {
-  background: var(--card);
-  color: var(--card-foreground);
-  border-radius: 12px;
+/* Contenedor principal del popup */
+#popup {
+  display: none;
+  position: absolute;
+  z-index: 50;
+  min-width: 300px;
+  max-width: 400px;
+  background: hsl(var(--card));
+  border-radius: 16px;
   box-shadow:
-    0 20px 25px -5px rgb(0 0 0 / 0.1),
-    0 8px 10px -6px rgb(0 0 0 / 0.1);
-  border: 1px solid var(--border);
-  width: 320px;
-  max-height: 400px;
-  overflow: hidden;
-  transform: scale(0.95) translateY(10px);
+    0 20px 60px rgba(0, 0, 0, 0.2),
+    0 0 0 1px hsl(var(--border));
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform: translateX(-20px) scale(0.9);
   opacity: 0;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  overflow: hidden;
 }
 
-.popup-show {
-  transform: scale(1) translateY(0);
+#popup.popup-show {
+  display: block;
+  transform: translateX(0) scale(1);
   opacity: 1;
+  pointer-events: auto;
+}
+
+/* Flecha del popup */
+#popup::before {
+  content: "";
+  position: absolute;
+  left: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-top: 12px solid transparent;
+  border-bottom: 12px solid transparent;
+  border-right: 12px solid hsl(var(--primary));
+  filter: drop-shadow(-2px 0 4px rgba(0, 0, 0, 0.1));
+}
+
+#popup::after {
+  content: "";
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-right: 10px solid hsl(var(--card));
+}
+
+.popup-container {
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 .popup-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px;
-  border-bottom: 1px solid var(--border);
-  background: var(--muted);
+  padding: 16px 20px;
+  border-bottom: 1px solid hsl(var(--border));
+  background: hsl(var(--primary));
+  position: relative;
+  overflow: hidden;
 }
 
 .popup-title {
-  font-weight: 600;
   font-size: 16px;
-  color: var(--foreground);
+  font-weight: 600;
+  color: hsl(var(--primary-foreground));
   margin: 0;
+  line-height: 1.4;
+  max-width: 220px;
+  word-break: break-word;
 }
 
 .popup-close {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: hsl(var(--primary-foreground));
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: var(--muted-foreground);
-  transition: all 0.15s ease;
+  flex-shrink: 0;
 }
 
 .popup-close:hover {
-  background: var(--accent);
-  color: var(--foreground);
+  background: rgba(255, 255, 255, 0.3);
+  transform: rotate(90deg);
 }
 
 .popup-content {
-  padding: 16px;
-  max-height: 250px;
+  max-height: 280px;
   overflow-y: auto;
+  padding: 16px 20px;
+  background: hsl(var(--card));
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--border)) transparent;
 }
 
 .popup-content::-webkit-scrollbar {
@@ -263,93 +309,130 @@
 }
 
 .popup-content::-webkit-scrollbar-track {
-  background: var(--muted);
+  background: transparent;
   border-radius: 3px;
 }
 
 .popup-content::-webkit-scrollbar-thumb {
-  background: var(--border);
+  background: hsl(var(--primary));
   border-radius: 3px;
 }
 
 .popup-content::-webkit-scrollbar-thumb:hover {
-  background: var(--muted-foreground);
+  background: hsl(var(--primary) / 0.8);
 }
 
 .popup-item {
   display: flex;
   flex-direction: column;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--border);
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  gap: 4px;
+  transition: all 0.2s ease;
+  background: hsl(var(--muted));
+}
+
+.popup-item:hover {
+  background: hsl(var(--accent));
 }
 
 .popup-item:last-child {
-  border-bottom: none;
+  margin-bottom: 0;
 }
 
 .popup-label {
   font-size: 11px;
-  font-weight: 500;
-  color: var(--muted-foreground);
+  font-weight: 600;
+  color: hsl(var(--muted-foreground));
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 4px;
+  letter-spacing: 0.5px;
 }
 
 .popup-value {
   font-size: 14px;
-  color: var(--foreground);
+  color: hsl(var(--foreground));
   word-break: break-word;
+  line-height: 1.4;
+  font-weight: 500;
 }
 
 .popup-actions {
   display: flex;
-  gap: 8px;
-  padding: 12px 16px;
-  border-top: 1px solid var(--border);
-  background: var(--muted);
+  gap: 10px;
+  padding: 14px 20px;
+  border-top: 1px solid hsl(var(--border));
+  background: hsl(var(--muted));
+  border-bottom-left-radius: 16px;
+  border-bottom-right-radius: 16px;
 }
 
 .popup-btn {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
+  gap: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
   border: none;
-  flex: 1;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .popup-btn-delete {
-  background: #fef2f2;
-  color: #dc2626;
+  background: hsl(var(--destructive));
+  color: hsl(var(--destructive-foreground));
 }
 
 .popup-btn-delete:hover {
-  background: #fee2e2;
-}
-
-.dark .popup-btn-delete {
-  background: rgba(239, 68, 68, 0.1);
-  color: #f87171;
-}
-
-.dark .popup-btn-delete:hover {
-  background: rgba(239, 68, 68, 0.2);
+  opacity: 0.9;
+  transform: translateY(-1px);
 }
 
 .popup-btn-close {
-  background: var(--secondary);
-  color: var(--secondary-foreground);
+  background: hsl(var(--secondary));
+  color: hsl(var(--secondary-foreground));
 }
 
 .popup-btn-close:hover {
-  background: var(--accent);
+  background: hsl(var(--accent));
+}
+
+.popup-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Responsive para móvil */
+@media (max-width: 640px) {
+  #popup {
+    min-width: 280px !important;
+    max-width: calc(100vw - 32px) !important;
+    position: fixed !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) scale(0.9) !important;
+  }
+
+  #popup.popup-show {
+    transform: translate(-50%, -50%) scale(1) !important;
+  }
+
+  #popup::before,
+  #popup::after {
+    display: none;
+  }
+
+  .popup-content {
+    max-height: 50vh;
+  }
+
+  .popup-actions {
+    flex-direction: column;
+  }
 }
 
 /* ===== SCROLLBAR GLOBAL ===== */
