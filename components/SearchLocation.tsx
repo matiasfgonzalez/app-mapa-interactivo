@@ -310,7 +310,7 @@ export function SearchLocation({
           {results.length === 0 && query.length >= 3 && !isLoading && (
             <div className="px-3 py-4 text-center">
               <p className="text-sm text-muted-foreground">
-                No se encontraron resultados para "{query}"
+                No se encontraron resultados para &ldquo;{query}&rdquo;
               </p>
               <p className="text-xs text-muted-foreground mt-1">
                 Intenta con otro término de búsqueda

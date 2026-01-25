@@ -14,9 +14,11 @@ import {
   Info,
   MapPin,
   Users,
+  BarChart3,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { SearchLocation } from "@/components/SearchLocation";
+import { StatsPanel, StatsMini } from "@/components/StatsPanel";
 import { LayerData, useMapStore } from "@/store/mapStore";
 import { NavigationMenuOptions } from "@/components/NavigationMenu";
 import { useAuth } from "@/hooks/useAuth";
@@ -36,6 +38,7 @@ export default function HomePage() {
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("layers");
+  const [rightActiveSection, setRightActiveSection] = useState("info");
   const [isMobile, setIsMobile] = useState(false);
   const [mobileBottomPanelOpen, setMobileBottomPanelOpen] = useState(false);
 
@@ -561,7 +564,9 @@ export default function HomePage() {
             <div className="p-3 sm:p-4 border-b border-border">
               <div className="flex items-center justify-between">
                 <h2 className="text-base sm:text-lg font-semibold text-foreground">
-                  Información
+                  {rightActiveSection === "info"
+                    ? "Información"
+                    : "Estadísticas"}
                 </h2>
                 <button
                   onClick={() => setRightSidebarOpen(false)}
@@ -572,72 +577,103 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Properties Panel */}
-            <div className="flex-1 p-3 sm:p-4 overflow-y-auto space-y-4">
-              {/* Resultados de estudiantes cercanos */}
-              {nearbyResults.length > 0 && (
-                <div className="border border-primary/20 rounded-xl p-4 bg-primary/5">
-                  <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
-                    <Users className="h-5 w-5 text-primary" />
-                    Estudiantes Cercanos ({nearbyResults.length})
-                  </h3>
-                  <div className="space-y-2">
-                    {nearbyResults.map((estudiante, idx) => (
-                      <div
-                        key={estudiante.id || idx}
-                        className="bg-card p-3 rounded-lg border border-border shadow-sm hover:shadow-md transition-shadow"
-                      >
-                        <p className="font-medium text-foreground">
-                          {estudiante.nombre_completo}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Distancia: {(estudiante.distancia / 1000).toFixed(2)}{" "}
-                          km
-                        </p>
-                        <p className="text-xs text-muted-foreground/70 mt-1 font-mono">
-                          {estudiante.lat.toFixed(6)},{" "}
-                          {estudiante.lon.toFixed(6)}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={limpiarResultadosCercanos}
-                    className="mt-3 w-full text-primary hover:text-primary"
+            {/* Right Sidebar Navigation */}
+            <div className="border-b border-border">
+              <nav className="flex">
+                {[
+                  { id: "info", icon: Info, label: "Info" },
+                  { id: "stats", icon: BarChart3, label: "Estadísticas" },
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => setRightActiveSection(item.id)}
+                    className={`flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 px-3 py-3 text-xs sm:text-sm font-medium transition-colors ${
+                      rightActiveSection === item.id
+                        ? "text-primary border-b-2 border-primary bg-primary/5"
+                        : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                    }`}
                   >
-                    Limpiar resultados
-                  </Button>
+                    <item.icon size={18} />
+                    <span>{item.label}</span>
+                  </button>
+                ))}
+              </nav>
+            </div>
+
+            {/* Right Sidebar Content */}
+            <div className="flex-1 p-3 sm:p-4 overflow-y-auto">
+              {rightActiveSection === "info" && (
+                <div className="space-y-4">
+                  {/* Resultados de estudiantes cercanos */}
+                  {nearbyResults.length > 0 && (
+                    <div className="border border-primary/20 rounded-xl p-4 bg-primary/5">
+                      <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                        <Users className="h-5 w-5 text-primary" />
+                        Estudiantes Cercanos ({nearbyResults.length})
+                      </h3>
+                      <div className="space-y-2">
+                        {nearbyResults.map((estudiante, idx) => (
+                          <div
+                            key={estudiante.id || idx}
+                            className="bg-card p-3 rounded-lg border border-border shadow-sm hover:shadow-md transition-shadow"
+                          >
+                            <p className="font-medium text-foreground">
+                              {estudiante.nombre_completo}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              Distancia:{" "}
+                              {(estudiante.distancia / 1000).toFixed(2)} km
+                            </p>
+                            <p className="text-xs text-muted-foreground/70 mt-1 font-mono">
+                              {estudiante.lat.toFixed(6)},{" "}
+                              {estudiante.lon.toFixed(6)}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={limpiarResultadosCercanos}
+                        className="mt-3 w-full text-primary hover:text-primary"
+                      >
+                        Limpiar resultados
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Empty state */}
+                  {!featureValues && nearbyResults.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-8 text-center">
+                      <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                        <MapPin className="h-8 w-8 text-muted-foreground" />
+                      </div>
+                      <p className="text-muted-foreground text-sm">
+                        Haz clic en un punto del mapa para ver información
+                      </p>
+                    </div>
+                  )}
+
+                  {featureValues && (
+                    <div className="space-y-3">
+                      <h3 className="font-medium text-foreground text-sm">
+                        Objeto seleccionado
+                      </h3>
+                      <pre className="text-wrap text-xs bg-muted p-3 rounded-lg overflow-x-auto font-mono text-foreground">
+                        {JSON.stringify(
+                          featureValues,
+                          (key, value) =>
+                            excludeKeys.has(key) ? undefined : value,
+                          2,
+                        )}
+                      </pre>
+                    </div>
+                  )}
                 </div>
               )}
 
-              {/* Empty state */}
-              {!featureValues && nearbyResults.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-                    <MapPin className="h-8 w-8 text-muted-foreground" />
-                  </div>
-                  <p className="text-muted-foreground text-sm">
-                    Haz clic en un punto del mapa para ver información
-                  </p>
-                </div>
-              )}
-
-              {featureValues && (
-                <div className="space-y-3">
-                  <h3 className="font-medium text-foreground text-sm">
-                    Objeto seleccionado
-                  </h3>
-                  <pre className="text-wrap text-xs bg-muted p-3 rounded-lg overflow-x-auto font-mono text-foreground">
-                    {JSON.stringify(
-                      featureValues,
-                      (key, value) =>
-                        excludeKeys.has(key) ? undefined : value,
-                      2,
-                    )}
-                  </pre>
-                </div>
+              {rightActiveSection === "stats" && (
+                <StatsPanel compact={isMobile} />
               )}
             </div>
           </div>
@@ -657,6 +693,10 @@ export default function HomePage() {
             <a href="#" className="hover:text-foreground transition-colors">
               Privacidad
             </a>
+            <span className="hidden lg:block">|</span>
+            <span className="hidden lg:flex">
+              <StatsMini />
+            </span>
           </div>
           <div className="flex items-center gap-4">
             <span className="font-mono">
