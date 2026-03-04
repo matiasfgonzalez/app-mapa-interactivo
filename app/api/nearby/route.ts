@@ -6,21 +6,28 @@ import ngeohash from "ngeohash";
 import { toLonLat } from "ol/proj";
 import type { NearbyStudentType } from "@/lib/types/nearbyStudentType";
 
+import { nearbySchema } from "@/lib/schemas/ubicacionSchema";
+
 export async function GET(request: Request) {
   try {
     const supabase = await createClient();
 
     const { searchParams } = new URL(request.url);
-    const latParam = Number.parseFloat(searchParams.get("lat") || "");
-    const lonParam = Number.parseFloat(searchParams.get("lon") || "");
+    const parsedParams = {
+      lat: searchParams.get("lat"),
+      lon: searchParams.get("lon"),
+    };
 
-    // 🔍 Validar los parámetros
-    if (Number.isNaN(latParam) || Number.isNaN(lonParam)) {
+    const result = nearbySchema.safeParse(parsedParams);
+
+    if (!result.success) {
       return NextResponse.json(
-        { error: "Debe enviar parámetros válidos: lat y lon" },
+        { error: "Debe enviar parámetros válidos: lat y lon numéricos" },
         { status: 400 }
       );
     }
+
+    const { lat: latParam, lon: lonParam } = result.data;
 
     let lat: number;
     let lon: number;
@@ -38,6 +45,13 @@ export async function GET(request: Request) {
     } else {
       // 🗺️ EPSG:3857 (metros) → convertir
       [lon, lat] = toLonLat([lonParam, latParam], "EPSG:3857");
+    }
+
+    if (Number.isNaN(lat) || Number.isNaN(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+      return NextResponse.json(
+        { error: "Coordenadas detectadas fuera del rango válido de la proyección (EPSG:4326)" },
+        { status: 400 }
+      );
     }
 
     // 1️⃣ Generar geohash del punto actual

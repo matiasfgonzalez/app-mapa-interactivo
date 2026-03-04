@@ -21,10 +21,10 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: true, data });
     }
 
-    // ✅ Si no pasás user_id → trae todas
+    // ✅ Si no pasás user_id → trae todas, pero SIN PII sensible.
     const { data, error } = await supabase
       .from("ubicacionesdeestudiantes")
-      .select("*");
+      .select("id, lat, lon, facultad, carrera, avatar_url"); // Protege email, nombre, profesion publicamente
 
     if (error) throw error;
     return NextResponse.json({ success: true, data });
@@ -43,9 +43,24 @@ export async function GET(req: Request) {
   }
 }
 
+import {
+  ubicacionBackendSchema,
+  ubicacionPatchSchema,
+} from "@/lib/schemas/ubicacionSchema";
+
 export async function POST(req: Request) {
   try {
     const supabase = await createClient();
+
+    const body = await req.json();
+    const result = ubicacionBackendSchema.safeParse(body);
+
+    if (!result.success) {
+      return NextResponse.json(
+        { success: false, error: "Datos inválidos", details: result.error.format() },
+        { status: 400 }
+      );
+    }
 
     const {
       localidad,
@@ -54,9 +69,7 @@ export async function POST(req: Request) {
       profesion,
       lat,
       lon,
-      email,
-      nombre_completo,
-    } = await req.json();
+    } = result.data;
 
     const {
       data: { user },
@@ -69,9 +82,9 @@ export async function POST(req: Request) {
       .insert([
         {
           user_id: user.id,
-          email,
-          nombre_completo,
-          localidad,
+          email: user.email || body.email,
+          nombre_completo: user.user_metadata?.full_name || body.nombre_completo,
+          localidad: localidad || "N/A",
           facultad,
           carrera,
           profesion,
@@ -97,8 +110,17 @@ export async function POST(req: Request) {
 export async function PATCH(req: Request) {
   try {
     const supabase = await createClient();
-    const { id, user_id, localidad, facultad, carrera, profesion, lat, lon } =
-      await req.json();
+    const body = await req.json();
+    const result = ubicacionPatchSchema.safeParse(body);
+
+    if (!result.success) {
+       return NextResponse.json(
+        { success: false, error: "Datos inválidos", details: result.error.format() },
+        { status: 400 }
+      );
+    }
+
+    const { id, user_id, localidad, facultad, carrera, profesion, lat, lon } = result.data;
 
     const { data, error } = await supabase
       .from("ubicacionesdeestudiantes")
