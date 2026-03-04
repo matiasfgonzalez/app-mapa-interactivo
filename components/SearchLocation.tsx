@@ -7,7 +7,6 @@ import {
   formatLocationName,
   type GeocodingResult,
 } from "@/lib/services/geocoding";
-import { useMapStore } from "@/store/mapStore";
 import { fromLonLat } from "ol/proj";
 import { toast } from "sonner";
 
@@ -47,7 +46,6 @@ export function SearchLocation({
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const map = useMapStore((s) => s.map);
   const debouncedQuery = useDebounce(query, 400);
 
   // Cargar búsquedas recientes del localStorage
@@ -128,6 +126,8 @@ export function SearchLocation({
   // Navegar a una ubicación en el mapa
   const goToLocation = useCallback(
     (result: GeocodingResult) => {
+      // @ts-expect-error - OL Map instance en window
+      const map = window.mapInstance;
       if (!map) {
         toast.error("El mapa no está disponible");
         return;
@@ -159,7 +159,7 @@ export function SearchLocation({
         duration: 2000,
       });
     },
-    [map, onLocationSelect, saveRecentSearch],
+    [onLocationSelect, saveRecentSearch],
   );
 
   // Manejar teclas

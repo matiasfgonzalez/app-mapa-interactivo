@@ -15,10 +15,9 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import SortableItem from "./SortableItem";
-import { LayerData } from "@/store/mapStore";
-
+import { LayerConfig } from "@/store/mapStore";
 interface DnDListProps {
-  layers: LayerData[];
+  layers: LayerConfig[];
 }
 
 export default function DnDList(props: Readonly<DnDListProps>) {

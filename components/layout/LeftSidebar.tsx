@@ -3,7 +3,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { SearchLocation } from "@/components/SearchLocation";
-import { LayerData } from "@/store/mapStore";
+import { LayerConfig } from "@/store/mapStore";
 import { User } from "@supabase/supabase-js";
 import { NearbyStudentType } from "@/lib/types/nearbyStudentType";
 import { FeatureValues } from "@/lib/types/featureValues";
@@ -18,10 +18,10 @@ interface LeftSidebarProps {
   user: User | null;
   checkUbicacion: boolean;
   setCheckUbicacion: (check: boolean) => void;
-  layers: LayerData[];
+  layers: LayerConfig[];
   toggleLayer: (id: string, visible: boolean) => void;
   setOpacity: (id: string, opacity: number) => void;
-  reorderLayers: (newLayers: LayerData[]) => void;
+  reorderLayers: (newLayers: LayerConfig[]) => void;
   featureValues: FeatureValues | null;
   buscarEstudiantesCercanos: () => Promise<void>;
 }

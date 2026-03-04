@@ -1,12 +1,12 @@
 "use client";
 
-import { LayerData, useMapStore } from "@/store/mapStore";
+import { LayerConfig, useMapStore } from "@/store/mapStore";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
 interface SortableItemProps {
   id: string;
-  layer: LayerData;
+  layer: LayerConfig;
 }
 
 export default function SortableItem({

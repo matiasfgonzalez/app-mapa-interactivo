@@ -34,7 +34,6 @@ interface ModalComponentProps {
 }
 
 const ModalComponent = ({ children }: ModalComponentProps) => {
-  const map = useMapStore((s) => s.map);
   const layers = useMapStore((s) => s.layers);
   const setLayers = useMapStore((s) => s.setLayers);
   const [options, setOptions] = useState<
@@ -58,6 +57,8 @@ const ModalComponent = ({ children }: ModalComponentProps) => {
   }, []);
 
   const addLayerSelect = async () => {
+    // @ts-expect-error - window instance
+    const map = window.mapInstance;
     if (!selectValue || !map) return;
 
     // ✅ Validar si la capa ya está cargada
@@ -72,16 +73,22 @@ const ModalComponent = ({ children }: ModalComponentProps) => {
       // Obtener GeoJSON de la capa
       const geojsonData = await getWFSIDECORLayer(selectValue);
 
-      const { vectorLayer, layerData } = await addLayerGeoJson(
+      const { vectorLayer, layerConfig } = await addLayerGeoJson(
         geojsonData,
         selectValue
       );
 
       // Agregar al mapa
       map.addLayer(vectorLayer);
+      
+      // @ts-expect-error
+      if (window.mapActions && window.mapActions.registerLayer) {
+        // @ts-expect-error
+        window.mapActions.registerLayer(selectValue, vectorLayer);
+      }
 
       // Actualizar estado
-      setLayers([...layers, layerData]);
+      setLayers([...layers, layerConfig]);
 
       toast.success(`Capa "${selectValue}" agregada correctamente.`);
       console.log("Capa agregada:", selectValue);

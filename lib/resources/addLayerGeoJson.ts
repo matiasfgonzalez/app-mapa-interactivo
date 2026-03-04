@@ -1,7 +1,7 @@
 import { Vector as VectorLayer } from "ol/layer";
 import VectorSource from "ol/source/Vector";
 import GeoJSON from "ol/format/GeoJSON";
-import { LayerData } from "@/store/mapStore";
+import { LayerConfig } from "@/store/mapStore";
 import type { GeoJSON as GeoJSONType } from "geojson";
 
 export const addLayerGeoJson = async (
@@ -20,13 +20,12 @@ export const addLayerGeoJson = async (
   });
 
   // Datos de la capa en el store
-  const layerData: LayerData = {
+  const layerConfig: LayerConfig = {
     id: layerName,
     title: layerName,
     visible: true,
     opacity: 1,
-    layer: vectorLayer,
   };
 
-  return { vectorLayer, layerData };
+  return { vectorLayer, layerConfig };
 };

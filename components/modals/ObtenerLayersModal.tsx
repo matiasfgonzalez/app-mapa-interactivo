@@ -46,7 +46,6 @@ const ObtenerLayersModal = ({
   const [loading, setLoading] = useState(false);
   const [capaSelect, setCapaSelect] = useState("");
 
-  const map = useMapStore((s) => s.map);
   const layers = useMapStore((s) => s.layers);
   const setLayers = useMapStore((s) => s.setLayers);
 
@@ -102,6 +101,8 @@ const ObtenerLayersModal = ({
   };
 
   const addLayer = async () => {
+    // @ts-expect-error - OL map instance global
+    const map = window.mapInstance;
     if (!map) {
       toast.error("El mapa no está inicializado");
       return;
@@ -113,16 +114,22 @@ const ObtenerLayersModal = ({
       selectValue
     );
 
-    const { vectorLayer, layerData } = await addLayerGeoJson(
+    const { vectorLayer, layerConfig } = await addLayerGeoJson(
       geoJson,
       capaSelect
     );
 
     // Agregar al mapa
     map.addLayer(vectorLayer);
+    
+    // @ts-expect-error - registerLayer global
+    if (window.mapActions && window.mapActions.registerLayer) {
+      // @ts-expect-error
+      window.mapActions.registerLayer(capaSelect, vectorLayer);
+    }
 
     // Actualizar estado
-    setLayers([...layers, layerData]);
+    setLayers([...layers, layerConfig]);
 
     toast.success(`Capa "${capaSelect}" agregada correctamente.`);
     console.log("Capa agregada:", capaSelect);

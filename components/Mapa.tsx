@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import "ol/ol.css";
 import Map from "ol/Map";
 import View from "ol/View";
@@ -14,31 +14,37 @@ import {
   baseLayer,
   fetchUbicacionesDelEstudiante,
   uniUaderLayer,
+  createNearbyStudentsLayer,
 } from "@/lib/const/layers";
-import { useAuth } from "@/hooks/useAuth";
+import Layer from "ol/layer/Layer";
 import Overlay from "ol/Overlay";
 import { toast } from "sonner";
 import { FeatureValues } from "@/lib/types/featureValues";
 import { excludeKeys } from "@/lib/types/excludeKeys";
+import { createClient } from "@/lib/supabase/client";
+import VectorLayer from "ol/layer/Vector";
+import VectorSource from "ol/source/Vector";
 
 export default function Mapa() {
   const mapRef = useRef<HTMLDivElement | null>(null);
-  const setMap = useMapStore((s) => s.setMap);
-  const map = useMapStore((s) => s.map);
-  const setLayers = useMapStore((s) => s.setLayers);
-  const layers = useMapStore((s) => s.layers);
+  
+  // Guardamos las referencias reales de las layers creadas por OL
+  const layersRef = useRef<Record<string, Layer>>({
+    base: baseLayer,
+    uni_uader: uniUaderLayer,
+  });
+  const mapInstanceRef = useRef<Map | null>(null);
+
+  const layersConfig = useMapStore((s) => s.layers);
+  const studentData = useMapStore((s) => s.studentData);
+  const nearbyStudentsData = useMapStore((s) => s.nearbyStudentsData);
+
   const setSelectedRegion = useMapStore((s) => s.setSelectedRegion);
   const setFeatureValues = useMapStore((s) => s.setFeatureValues);
-
   const setCoordinate = useMapStore((s) => s.setCoordinate);
-  const setModalOpen = useMapStore((s) => s.setModalOpen);
-
-  const lon = useMapStore((s) => s.lon);
-  const lat = useMapStore((s) => s.lat);
-
-  const setUser = useMapStore((s) => s.setUser);
-
-  const { user } = useAuth();
+  
+  // user comes from hook or state? we can use mapStore state user
+  const user = useMapStore((s) => s.user);
 
   // Función para cerrar popup
   const closePopup = (popupElement: HTMLElement, popupOverlay: Overlay) => {
@@ -50,12 +56,6 @@ export default function Mapa() {
   // Función para manejar la eliminación
   const handleEliminar = async (featureId: string, featureName: string) => {
     try {
-      const map = useMapStore.getState().map; // 👈 siempre el valor actualizado
-      if (!map) {
-        toast.error("El mapa no está inicializado");
-        return;
-      }
-
       if (!featureId || featureId === "unknown")
         return toast.error("Este dato no se puede eliminar");
 
@@ -72,44 +72,17 @@ export default function Mapa() {
 
       if (!res.ok) throw new Error(result.error || "Error al eliminar");
 
-      const user = useMapStore.getState().user;
-      if (!user) {
-        toast.error("Usuario no encontrado");
-        return;
+      if (user) {
+         // Re-fetch y actualizar Zustand
+         useMapStore.getState().updateStudentLocationLayer(user);
       }
 
-      const vectorLayer = await fetchUbicacionesDelEstudiante(user);
-      if (!vectorLayer) {
-        toast.error("No se pudo cargar la capa de ubicaciones");
-        return;
+      const map = mapInstanceRef.current;
+      if (map) {
+        const popupElement = document.getElementById("popup") as HTMLElement;
+        const popupOverlay = map.getOverlayById("popup_overlay") as Overlay;
+        if (popupElement && popupOverlay) closePopup(popupElement, popupOverlay);
       }
-
-      // Agregar la capa al mapa
-      map.addLayer(vectorLayer);
-
-      const layers = useMapStore.getState().layers;
-      // Validar si ya existe una layer similar, eliminarla para evitar duplicados
-      const existingIndex = layers.findIndex(
-        (l) => l.id === "ubicacion_estudiante",
-      );
-      if (existingIndex !== -1) {
-        const existingLayer = layers[existingIndex].layer;
-        map.removeLayer(existingLayer);
-        layers.splice(existingIndex, 1); // Eliminar del estado
-      }
-
-      layers.push({
-        id: "ubicacion_estudiante",
-        title: "Mi Ubicación",
-        visible: true,
-        opacity: 1,
-        layer: vectorLayer,
-      });
-
-      const popupElement = document.getElementById("popup") as HTMLElement;
-
-      const popupOverlay = map.getOverlayById("popup_overlay") as Overlay;
-      closePopup(popupElement, popupOverlay);
 
       toast.success(`Ubicación eliminada correctamente`);
       return result;
@@ -119,7 +92,7 @@ export default function Mapa() {
     }
   };
 
-  // Función para crear contenido del popup mejorado
+  // Función para crear contenido del popup
   const createPopupContent = (
     values: FeatureValues,
     popupElement: HTMLElement,
@@ -128,11 +101,8 @@ export default function Mapa() {
     const featureId = values.id || values.gid || values.objectid || "unknown";
     const featureName = (values.nombre as string) || "Región Seleccionada";
 
-    // Verificar si es una ubicación del usuario actual
-    const currentUser = useMapStore.getState().user;
     const featureUserId = values.user_id || values.userid || values.usuario_id;
-    const isOwnedByCurrentUser =
-      currentUser && featureUserId && featureUserId === currentUser.id;
+    const isOwnedByCurrentUser = user && featureUserId && featureUserId === user.id;
 
     return `
       <div class="popup-container">
@@ -213,10 +183,11 @@ export default function Mapa() {
     `;
   };
 
+  // 1. Inicializar el mapa
   useEffect(() => {
     if (!mapRef.current) return;
+    if (mapInstanceRef.current) return; // Evitar inicializar 2 veces
 
-    // Crear mapa
     const map = new Map({
       target: mapRef.current,
       layers: [baseLayer, uniUaderLayer],
@@ -226,95 +197,62 @@ export default function Mapa() {
       }),
     });
 
-    // Guardar referencia global del mapa y capas en Zustand
-    setMap(map);
+    mapInstanceRef.current = map;
 
-    // Exponer funciones al window para que puedan ser llamadas desde el HTML
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (window as any).mapInstance = {
+    (window as any).mapInstance = map;
+    
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).mapActions = {
       handleEliminar: (featureId: string, featureName: string) =>
         handleEliminar(featureId, featureName),
+      registerLayer: (id: string, layer: Layer) => {
+        layersRef.current[id] = layer;
+      }
     };
-
-    setLayers([
-      {
-        id: "base",
-        title: "Mapa Base",
-        visible: true,
-        opacity: 1,
-        layer: baseLayer,
-      },
-      {
-        id: "uni_uader",
-        title: "Ubicación Unidades Académicas UADER",
-        visible: true,
-        opacity: 1,
-        layer: uniUaderLayer,
-      },
-    ]);
 
     // Crear overlay para popup
     const popupElement = document.getElementById("popup") as HTMLElement;
     const popupOverlay = new Overlay({
       id: "popup_overlay",
       element: popupElement,
-      autoPan: {
-        animation: {
-          duration: 250,
-        },
-      },
-      positioning: "center-center", // Popup centrado en el punto
+      autoPan: { animation: { duration: 250 } },
+      positioning: "center-center",
       stopEvent: true,
-      offset: [20, -233], // Desplazar ~160px (mitad del ancho del popup) para que el punto quede en el borde izquierdo
+      offset: [20, -233],
     });
     map.addOverlay(popupOverlay);
 
     // 🎯 Interacción de selección
     const select = new Select({
-      condition: click, // solo con clic
-      // Usamos una función de estilo en lugar de un objeto estático
+      condition: click,
       style: function (feature) {
         if (feature) {
           const geometryType = feature.getGeometry()?.getType();
           const styles = [];
 
-          // Estilo para Puntos (Point, MultiPoint)
           if (geometryType === "Point" || geometryType === "MultiPoint") {
             styles.push(
               new Style({
                 image: new CircleStyle({
                   radius: 7,
-                  fill: new Fill({ color: "rgba(255, 0, 0, 0.5)" }), // Relleno rojo transparente
-                  stroke: new Stroke({ color: "red", width: 2 }), // Borde rojo
+                  fill: new Fill({ color: "rgba(255, 0, 0, 0.5)" }),
+                  stroke: new Stroke({ color: "red", width: 2 }),
                 }),
               }),
             );
-          }
-          // Estilo para Líneas (LineString, MultiLineString)
-          else if (
+          } else if (
             geometryType === "LineString" ||
             geometryType === "MultiLineString"
           ) {
             styles.push(
-              new Style({
-                stroke: new Stroke({
-                  color: "blue", // Color de línea azul
-                  width: 5,
-                }),
-              }),
+              new Style({ stroke: new Stroke({ color: "blue", width: 5 }) }),
             );
-          }
-          // Estilo para Polígonos y otras geometrías
-          else {
+          } else {
             styles.push(
               new Style({
-                stroke: new Stroke({
-                  color: "yellow", // Borde amarillo
-                  width: 3,
-                }),
-                fill: new Fill({
-                  color: "rgba(255, 255, 0, 0.2)", // Relleno amarillo transparente
-                }),
+                stroke: new Stroke({ color: "yellow", width: 3 }),
+                fill: new Fill({ color: "rgba(255, 255, 0, 0.2)" }),
               }),
             );
           }
@@ -324,7 +262,6 @@ export default function Mapa() {
     });
     map.addInteraction(select);
 
-    // 📌 Evento cuando seleccionás una feature
     select.on("select", (e) => {
       const selected = e.selected[0];
       if (selected) {
@@ -334,184 +271,157 @@ export default function Mapa() {
         setSelectedRegion(id || null);
         setFeatureValues(values);
 
-        // Obtener la geometría y calcular su centro
         const geometry = selected.getGeometry();
         if (geometry) {
           const extent = geometry.getExtent();
-
-          // Calcular el centro de la geometría
           const centerX = (extent[0] + extent[2]) / 2;
           const centerY = (extent[1] + extent[3]) / 2;
           const center = [centerX, centerY];
 
-          // Determinar el tipo de geometría para ajustar el zoom
           const geometryType = geometry.getType();
           let maxZoom = 12;
-          let padding = [100, 400, 100, 100]; // [top, right, bottom, left] - más espacio a la derecha para el popup
+          let padding = [100, 400, 100, 100];
 
-          // Ajustar zoom según el tipo de geometría
           if (geometryType === "Point" || geometryType === "MultiPoint") {
             maxZoom = 14;
             padding = [80, 380, 80, 80];
-          } else if (
-            geometryType === "LineString" ||
-            geometryType === "MultiLineString"
-          ) {
+          } else if (geometryType === "LineString" || geometryType === "MultiLineString") {
             maxZoom = 13;
             padding = [90, 400, 90, 90];
           } else {
-            // Polígonos y otras geometrías
             maxZoom = 11;
             padding = [100, 420, 100, 100];
           }
 
-          // Hacer zoom suave con animación mejorada
           map.getView().fit(extent, {
             duration: 800,
             padding: padding,
             maxZoom: maxZoom,
-            easing: (t) => (t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t), // easeInOutQuad
+            easing: (t) => (t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t),
           });
 
-          // Pequeño delay antes de mostrar el popup para que la animación se complete
           setTimeout(() => {
-            // Posicionar el popup en el centro de la geometría
             popupOverlay.setPosition(center);
-            popupElement.innerHTML = createPopupContent(
-              values,
-              popupElement,
-              popupOverlay,
-            );
+            popupElement.innerHTML = createPopupContent(values, popupElement, popupOverlay);
             popupElement.style.display = "block";
 
-            // Trigger de animación
             setTimeout(() => {
               popupElement.classList.add("popup-show");
             }, 10);
           }, 400);
         }
       } else {
-        // Deselección
         setSelectedRegion(null);
         setFeatureValues(null);
         popupElement.classList.remove("popup-show");
-        setTimeout(() => {
-          closePopup(popupElement, popupOverlay);
-        }, 200);
+        setTimeout(() => closePopup(popupElement, popupOverlay), 200);
       }
     });
 
-    // Evento click en región
-    map.on("singleclick", (evt) => {
-      const feature = map.forEachFeatureAtPixel(evt.pixel, (f) => f);
-
-      // 👇 limpiar si no hay feature clickeada
-      setSelectedRegion(null);
-      setFeatureValues(null);
-
-      if (feature) {
-        const values = feature.getProperties();
-        console.log("Feature values:", values);
-
-        const id = feature.get("id");
-        if (id) {
-          setSelectedRegion(id);
-        }
-        setFeatureValues(values);
-      } else {
-        // Solo abrir modal si checkUbicacion está activo
-        const { checkUbicacion } = useMapStore.getState();
-        if (checkUbicacion) {
-          setModalOpen(true);
-        }
+    map.on("click", (e) => {
+      // si checkUbicacion es true, le pasamos las coordenadas
+      const state = useMapStore.getState();
+      if (state.checkUbicacion) {
+        const [lonClick, latClick] = toLonLat(e.coordinate);
+        setCoordinate(lonClick, latClick);
+        state.setModalOpen(true);
       }
     });
-
-    map.on("pointermove", (evt) => {
-      const [lon, lat] = toLonLat(evt.coordinate);
-      setCoordinate(lon, lat);
-    });
-
-    // Cerrar popup al hacer clic fuera
-    map.on("click", (evt) => {
-      if (!map.forEachFeatureAtPixel(evt.pixel, (f) => f)) {
-        popupElement.classList.remove("popup-show");
-        setTimeout(() => {
-          closePopup(popupElement, popupOverlay);
-        }, 200);
-      }
-    });
-
-    map.on("moveend", async () => {
-      const view = map.getView();
-      const [lon, lat] = view.getCenter()!;
-      const lonLat = toLonLat([lon, lat]);
-
-      //console.log("Centro del mapa:", lonLat);
-      //const puntos = await buscarCercanos(lat, lon);
-      //console.log("Puntos cercanos:", puntos);
-    });
-
+    
+    // Al desmontar, destruimos el mapa
     return () => {
-      // Limpiar referencias del window
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      delete (window as any).mapInstance;
-      map.setTarget(undefined);
-    };
-  }, [setMap, setLayers, setSelectedRegion]);
-
-  // 2️⃣ Cargar ubicaciones solo cuando el usuario ya esté disponible
-  useEffect(() => {
-    if (!user || !map) return;
-
-    const loadUbicaciones = async () => {
-      try {
-        const vectorLayer = await fetchUbicacionesDelEstudiante(user);
-        if (!vectorLayer) {
-          console.error("No se pudo cargar la capa de ubicaciones");
-          return;
-        }
-
-        // Agregar la capa al mapa
-        map.addLayer(vectorLayer);
-
-        // Validar si ya existe una layer similar, eliminarla para evitar duplicados
-        const existingIndex = layers.findIndex(
-          (l) => l.id === "ubicacion_estudiante",
-        );
-        if (existingIndex !== -1) {
-          const existingLayer = layers[existingIndex].layer;
-          map.removeLayer(existingLayer);
-          layers.splice(existingIndex, 1); // Eliminar del estado
-        }
-
-        layers.push({
-          id: "ubicacion_estudiante",
-          title: "Mi Ubicación",
-          visible: true,
-          opacity: 1,
-          layer: vectorLayer,
-        });
-      } catch (err) {
-        console.error("Error cargando ubicaciones:", err);
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.setTarget(undefined);
+        mapInstanceRef.current = null;
       }
     };
+  }, []);
 
-    loadUbicaciones();
-  }, [user, map]);
-
+  // 2. Sincronizar Student Data (Mi Ubicación)
   useEffect(() => {
-    if (user) {
-      setUser(user); // 👈 guardás el user apenas esté disponible
+    const map = mapInstanceRef.current;
+    if (!map || !user) return; // user is required here for permissions if we want it, but fetch happens in store
+
+    if (studentData) {
+      // Recreamos la capa
+      fetchUbicacionesDelEstudiante(user).then((vectorLayer) => {
+        if (!vectorLayer) return;
+
+        // Remover capa existente de OL
+        const oldLayer = layersRef.current["ubicacion_estudiante"];
+        if (oldLayer) map.removeLayer(oldLayer);
+
+        layersRef.current["ubicacion_estudiante"] = vectorLayer;
+        
+        // Match visibility/opacity from config if exists
+        const config = useMapStore.getState().layers.find(l => l.id === "ubicacion_estudiante");
+        if (config) {
+          vectorLayer.setVisible(config.visible);
+          vectorLayer.setOpacity(config.opacity);
+        }
+        
+        map.addLayer(vectorLayer);
+      });
     }
-  }, [user, setUser]);
+  }, [studentData, user]);
+
+  // 3. Sincronizar Nearby Students (Estudiantes Cercanos)
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (nearbyStudentsData && nearbyStudentsData.length > 0) {
+      createNearbyStudentsLayer(nearbyStudentsData).then((vectorLayer) => {
+        if (!vectorLayer) return;
+
+        const oldLayer = layersRef.current["estudiantes_cercanos"];
+        if (oldLayer) map.removeLayer(oldLayer);
+
+        layersRef.current["estudiantes_cercanos"] = vectorLayer;
+        
+        const config = useMapStore.getState().layers.find(l => l.id === "estudiantes_cercanos");
+        if (config) {
+          vectorLayer.setVisible(config.visible);
+          vectorLayer.setOpacity(config.opacity);
+        }
+        
+        map.addLayer(vectorLayer);
+      });
+    } else {
+       // Eliminamos si no hay data
+       const oldLayer = layersRef.current["estudiantes_cercanos"];
+       if (oldLayer) {
+          map.removeLayer(oldLayer);
+          delete layersRef.current["estudiantes_cercanos"];
+       }
+    }
+  }, [nearbyStudentsData]);
+
+  // 4. Sincronizar Visibility and Opacity and Z-Index based on LayerConfig changes
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    // Actualizamos zIndex en el orden del array
+    layersConfig.forEach((conf, index) => {
+      const realLayer = layersRef.current[conf.id];
+      if (realLayer) {
+        realLayer.setVisible(conf.visible);
+        realLayer.setOpacity(conf.opacity);
+        // reverse index because CSS z-index (first in array is lower)
+        realLayer.setZIndex(layersConfig.length - index);
+      }
+    });
+  }, [layersConfig]);
 
   return (
     <>
-      <div className="w-full h-full border shadow relative">
-        <div ref={mapRef} className="w-full h-full" />
-        <div id="popup" />
-      </div>
+      <div id="map" ref={mapRef} className="w-full h-full " />
+      <div
+        id="popup"
+        className="ol-popup absolute"
+        style={{ display: "none" }}
+      ></div>
     </>
   );
 }

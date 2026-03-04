@@ -1,25 +1,33 @@
 import { User } from "@supabase/supabase-js";
 import { create } from "zustand";
-import {
-  fetchUbicacionesDelEstudiante,
-  createNearbyStudentsLayer,
-} from "@/lib/const/layers";
-import type Map from "ol/Map";
-import type { Layer } from "ol/layer";
 import type { NearbyStudentType } from "@/lib/types/nearbyStudentType";
 import type { FeatureValues } from "@/lib/types/featureValues";
+import type { EstudianteType } from "@/lib/types/estudianteType";
 
-export interface LayerData {
+export interface LayerConfig {
   id: string;
   title: string;
   visible: boolean;
   opacity: number;
-  layer: Layer; // referencia real a ol/layer
 }
 
+export const INITIAL_LAYERS: LayerConfig[] = [
+  {
+    id: "base",
+    title: "Mapa Base",
+    visible: true,
+    opacity: 1,
+  },
+  {
+    id: "uni_uader",
+    title: "Ubicación Unidades Académicas UADER",
+    visible: true,
+    opacity: 1,
+  },
+];
+
 interface MapState {
-  map: Map | null; // referencia a OpenLayers Map
-  layers: LayerData[];
+  layers: LayerConfig[];
   selectedRegion: string | null;
   featureValues: FeatureValues | null;
   lon: number | null;
@@ -27,9 +35,12 @@ interface MapState {
   checkUbicacion: boolean;
   modalOpen: boolean;
   user: User | null;
+  
+  // Data plane para que Mapa.tsx reaccione
+  studentData: EstudianteType[] | null;
+  nearbyStudentsData: NearbyStudentType[] | null;
 
-  setMap: (map: Map) => void;
-  setLayers: (layers: LayerData[]) => void;
+  setLayers: (layers: LayerConfig[]) => void;
   toggleLayer: (id: string, visible: boolean) => void;
   setOpacity: (id: string, opacity: number) => void;
   setSelectedRegion: (id: string | null) => void;
@@ -38,15 +49,15 @@ interface MapState {
   setCheckUbicacion: (check: boolean) => void;
   setModalOpen: (open: boolean) => void;
   setUser: (user: User | null) => void;
+  
+  // Acciones que solo actualizan estado de datos (Mapa.tsx observará este estado)
   updateStudentLocationLayer: (user: User) => Promise<void>;
-  updateNearbyStudentsLayer: (
-    nearbyStudents: NearbyStudentType[]
-  ) => Promise<void>;
+  updateNearbyStudentsLayer: (nearbyStudents: NearbyStudentType[]) => Promise<void>;
+  clearNearbyStudentsLayer: () => void;
 }
 
 export const useMapStore = create<MapState>((set, get) => ({
-  map: null,
-  layers: [],
+  layers: INITIAL_LAYERS,
   selectedRegion: null,
   featureValues: null,
   lon: null,
@@ -54,29 +65,22 @@ export const useMapStore = create<MapState>((set, get) => ({
   checkUbicacion: false,
   modalOpen: false,
   user: null,
+  studentData: null,
+  nearbyStudentsData: null,
 
-  setMap: (map) => set({ map }),
   setLayers: (layers) => set({ layers }),
   toggleLayer: (id, visible) =>
     set((state) => {
-      const updated = state.layers.map((l) => {
-        if (l.id === id) {
-          l.layer.setVisible(visible);
-          return { ...l, visible };
-        }
-        return l;
-      });
+      const updated = state.layers.map((l) =>
+        l.id === id ? { ...l, visible } : l
+      );
       return { layers: updated };
     }),
   setOpacity: (id, opacity) =>
     set((state) => {
-      const updated = state.layers.map((l) => {
-        if (l.id === id) {
-          l.layer.setOpacity(opacity);
-          return { ...l, opacity };
-        }
-        return l;
-      });
+      const updated = state.layers.map((l) =>
+        l.id === id ? { ...l, opacity } : l
+      );
       return { layers: updated };
     }),
   setSelectedRegion: (id) => set({ selectedRegion: id }),
@@ -91,66 +95,65 @@ export const useMapStore = create<MapState>((set, get) => ({
     }
   },
   setUser: (user) => set({ user }),
+  
   updateStudentLocationLayer: async (user) => {
-    const { map, layers } = get();
-    if (!map) return;
-
-    const vectorLayer = await fetchUbicacionesDelEstudiante(user);
-    if (vectorLayer) {
-      map.addLayer(vectorLayer);
-
-      // Remover capa existente si hay
-      const existingIndex = layers.findIndex(
-        (l) => l.id === "ubicacion_estudiante"
-      );
-      if (existingIndex !== -1) {
-        const existingLayer = layers[existingIndex].layer;
-        map.removeLayer(existingLayer);
-        layers.splice(existingIndex, 1);
+    try {
+      const response = await fetch(`/api/ubicaciones?user_id=${user.id}`);
+      const result = await response.json();
+      if (result.success) {
+        set({ studentData: result.data as EstudianteType[] });
+        
+        // Asegurar que la capa existe en la configuración para UI
+        const state = get();
+        if (!state.layers.find(l => l.id === "ubicacion_estudiante")) {
+          set({
+            layers: [
+              ...state.layers,
+              {
+                id: "ubicacion_estudiante",
+                title: "Mi Ubicación",
+                visible: true,
+                opacity: 1,
+              }
+            ]
+          });
+        }
       }
-
-      // Agregar nueva capa
-      layers.push({
-        id: "ubicacion_estudiante",
-        title: "Mi Ubicación",
-        visible: true,
-        opacity: 1,
-        layer: vectorLayer,
-      });
-
-      // Actualizar el estado
-      set({ layers: [...layers] });
+    } catch (error) {
+      console.error("Error fetching student locations:", error);
     }
   },
+  
   updateNearbyStudentsLayer: async (nearbyStudents) => {
-    const { map, layers } = get();
-    if (!map || !nearbyStudents || nearbyStudents.length === 0) return;
-
-    const vectorLayer = await createNearbyStudentsLayer(nearbyStudents);
-    if (vectorLayer) {
-      map.addLayer(vectorLayer);
-
-      // Remover capa existente si hay
-      const existingIndex = layers.findIndex(
-        (l) => l.id === "estudiantes_cercanos"
-      );
-      if (existingIndex !== -1) {
-        const existingLayer = layers[existingIndex].layer;
-        map.removeLayer(existingLayer);
-        layers.splice(existingIndex, 1);
-      }
-
-      // Agregar nueva capa
-      layers.push({
-        id: "estudiantes_cercanos",
-        title: `Estudiantes Cercanos (${nearbyStudents.length})`,
-        visible: true,
-        opacity: 1,
-        layer: vectorLayer,
+    if (!nearbyStudents || nearbyStudents.length === 0) return;
+    set({ nearbyStudentsData: nearbyStudents });
+    
+    // Asegurar que la capa existe en la configuración para UI
+    const state = get();
+    const existingIndex = state.layers.findIndex(l => l.id === "estudiantes_cercanos");
+    
+    if (existingIndex !== -1) {
+      const updatedLayers = [...state.layers];
+      updatedLayers[existingIndex].title = `Estudiantes Cercanos (${nearbyStudents.length})`;
+      set({ layers: updatedLayers });
+    } else {
+      set({
+        layers: [
+          ...state.layers,
+          {
+            id: "estudiantes_cercanos",
+            title: `Estudiantes Cercanos (${nearbyStudents.length})`,
+            visible: true,
+            opacity: 1,
+          }
+        ]
       });
-
-      // Actualizar el estado
-      set({ layers: [...layers] });
     }
   },
+  
+  clearNearbyStudentsLayer: () => {
+    set({ nearbyStudentsData: null });
+    const layers = get().layers.filter(l => l.id !== "estudiantes_cercanos");
+    set({ layers });
+  }
 }));

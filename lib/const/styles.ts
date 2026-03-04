@@ -8,7 +8,6 @@ import {
 } from "ol/style";
 import { Geometry } from "ol/geom";
 import { wrapText } from "../resources/wrapText";
-import { useMapStore } from "@/store/mapStore";
 import { FeatureLike } from "ol/Feature";
 
 export const dynamicStyle = (feature: FeatureLike): Style => {
@@ -60,7 +59,7 @@ export const dynamicStyle = (feature: FeatureLike): Style => {
   });
 };
 
-export const styleUniFcyt = (feature: FeatureLike): Style => {
+export const styleUniFcyt = (feature: FeatureLike, resolution: number): Style => {
   const geometry = feature.getGeometry() as Geometry | undefined;
   if (!geometry) {
     return new Style({
@@ -70,11 +69,10 @@ export const styleUniFcyt = (feature: FeatureLike): Style => {
   }
 
   const type = geometry.getType();
-  const map = useMapStore.getState().map;
-  const zoom = map?.getView().getZoom() ?? 0;
-
+  
+  // OL Resolution < 150 es aproximadamente zoom >= 11
   const label: string =
-    zoom >= 11
+    resolution < 150
       ? (feature.get("sede_nomb") as string)
       : (feature.get("sede") as string);
 

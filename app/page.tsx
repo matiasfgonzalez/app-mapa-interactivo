@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Mapa from "@/components/Mapa";
-import { LayerData, useMapStore } from "@/store/mapStore";
+import { LayerConfig, useMapStore } from "@/store/mapStore";
 import { useAuth } from "@/hooks/useAuth";
 import LocationModal from "@/components/modals/LocationModal";
 import { buscarCercanos } from "@/lib/utils/buscarCercanos";
@@ -27,7 +27,6 @@ export default function HomePage() {
   const [mobileBottomPanelOpen, setMobileBottomPanelOpen] = useState(false);
 
   // Zustand
-  const map = useMapStore((s) => s.map);
   const layers = useMapStore((s) => s.layers);
   const setLayers = useMapStore((s) => s.setLayers);
   const toggleLayer = useMapStore((s) => s.toggleLayer);
@@ -40,6 +39,7 @@ export default function HomePage() {
   const updateNearbyStudentsLayer = useMapStore(
     (s) => s.updateNearbyStudentsLayer
   );
+  const clearNearbyStudentsLayer = useMapStore((s) => s.clearNearbyStudentsLayer);
 
   const [nearbyResults, setNearbyResults] = useState<NearbyStudentType[]>([]);
 
@@ -66,16 +66,8 @@ export default function HomePage() {
     }
   }, [leftSidebarOpen, rightSidebarOpen, isMobile]);
 
-  function reorderLayers(newLayers: LayerData[]) {
+  function reorderLayers(newLayers: LayerConfig[]) {
     setLayers(newLayers);
-
-    if (!map) return;
-
-    map.getLayers().clear();
-
-    for (const l of newLayers) {
-      map.addLayer(l.layer);
-    }
   }
 
   const buscarEstudiantesCercanos = async () => {
@@ -134,15 +126,7 @@ export default function HomePage() {
   };
 
   const limpiarResultadosCercanos = () => {
-    const { map, layers } = useMapStore.getState();
-
-    const layerIndex = layers.findIndex((l) => l.id === "estudiantes_cercanos");
-    if (layerIndex !== -1 && map) {
-      const layer = layers[layerIndex].layer;
-      map.removeLayer(layer);
-      layers.splice(layerIndex, 1);
-    }
-
+    clearNearbyStudentsLayer();
     setNearbyResults([]);
 
     toast.success("Resultados limpiados", {
