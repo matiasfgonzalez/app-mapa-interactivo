@@ -27,6 +27,7 @@ import VectorSource from "ol/source/Vector";
 
 export default function Mapa() {
   const mapRef = useRef<HTMLDivElement | null>(null);
+  const popupRef = useRef<HTMLDivElement | null>(null);
   
   // Guardamos las referencias reales de las layers creadas por OL
   const layersRef = useRef<Record<string, Layer>>({
@@ -79,7 +80,7 @@ export default function Mapa() {
 
       const map = mapInstanceRef.current;
       if (map) {
-        const popupElement = document.getElementById("popup") as HTMLElement;
+        const popupElement = popupRef.current;
         const popupOverlay = map.getOverlayById("popup_overlay") as Overlay;
         if (popupElement && popupOverlay) closePopup(popupElement, popupOverlay);
       }
@@ -111,10 +112,12 @@ export default function Mapa() {
           <h3 class="popup-title">${featureName}</h3>
           <button class="popup-close" onclick="(function() {
             const popup = document.getElementById('popup');
-            popup.classList.remove('popup-show');
-            setTimeout(() => popup.style.display='none', 200);
+            if (popup) {
+              popup.classList.remove('popup-show');
+              setTimeout(() => popup.style.display='none', 300);
+            }
           })()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
@@ -130,7 +133,7 @@ export default function Mapa() {
               <div class="popup-item">
                 <span class="popup-label">${
                   key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, " ")
-                }:</span>
+                }</span>
                 <span class="popup-value">${val || "N/A"}</span>
               </div>
             `,
@@ -150,7 +153,7 @@ export default function Mapa() {
               "\\'",
             )}')"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="3,6 5,6 21,6"></polyline>
               <path d="m19,6v14a2,2 0,0 1,-2,2H7a2,2 0,0 1,-2,-2V6m3,0V4a2,2 0,0 1,2,-2h4a2,2 0,0 1,2,2V6"></path>
               <line x1="10" y1="11" x2="10" y2="17"></line>
@@ -166,11 +169,13 @@ export default function Mapa() {
             class="popup-btn popup-btn-close" 
             onclick="(function() {
               const popup = document.getElementById('popup');
-              popup.classList.remove('popup-show');
-              setTimeout(() => popup.style.display='none', 200);
+              if (popup) {
+                popup.classList.remove('popup-show');
+                setTimeout(() => popup.style.display='none', 300);
+              }
             })()"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
@@ -212,7 +217,9 @@ export default function Mapa() {
     };
 
     // Crear overlay para popup
-    const popupElement = document.getElementById("popup") as HTMLElement;
+    const popupElement = popupRef.current;
+    if (!popupElement) return; // Validación de nulidad crucial
+
     const popupOverlay = new Overlay({
       id: "popup_overlay",
       element: popupElement,
@@ -306,15 +313,17 @@ export default function Mapa() {
             popupElement.style.display = "block";
 
             setTimeout(() => {
-              popupElement.classList.add("popup-show");
+              if (popupElement) popupElement.classList.add("popup-show");
             }, 10);
           }, 400);
         }
       } else {
         setSelectedRegion(null);
         setFeatureValues(null);
-        popupElement.classList.remove("popup-show");
-        setTimeout(() => closePopup(popupElement, popupOverlay), 200);
+        if (popupElement) {
+          popupElement.classList.remove("popup-show");
+          setTimeout(() => closePopup(popupElement, popupOverlay), 200);
+        }
       }
     });
 
@@ -419,6 +428,7 @@ export default function Mapa() {
       <div id="map" ref={mapRef} className="w-full h-full " />
       <div
         id="popup"
+        ref={popupRef}
         className="ol-popup absolute"
         style={{ display: "none" }}
       ></div>
