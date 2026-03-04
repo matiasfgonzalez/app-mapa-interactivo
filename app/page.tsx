@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Mapa from "@/components/Mapa";
+import dynamic from "next/dynamic";
 import { LayerConfig, useMapStore } from "@/store/mapStore";
 import { useAuth } from "@/hooks/useAuth";
 import LocationModal from "@/components/modals/LocationModal";
@@ -15,6 +15,17 @@ import { LeftSidebar } from "@/components/layout/LeftSidebar";
 import { RightSidebar } from "@/components/layout/RightSidebar";
 import { MapControls } from "@/components/layout/MapControls";
 import { Footer } from "@/components/layout/Footer";
+
+// Importación dinámica del Mapa para evitar bloqueos en el hilo principal y errores de SSR (OpenLayers necesita la API `window`)
+const Mapa = dynamic(() => import("@/components/Mapa"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full flex flex-col items-center justify-center bg-gray-50/50">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <p className="mt-4 text-sm text-muted-foreground font-medium">Cargando mapa interactivo...</p>
+    </div>
+  ),
+});
 
 export default function HomePage() {
   const { user, loading } = useAuth();
