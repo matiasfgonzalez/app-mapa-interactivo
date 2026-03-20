@@ -5,6 +5,8 @@ import { NearbyStudentType } from "@/lib/types/nearbyStudentType";
 import { FeatureValues } from "@/lib/types/featureValues";
 import { excludeKeys } from "@/lib/types/excludeKeys";
 
+import { User } from "@supabase/supabase-js";
+
 interface RightSidebarProps {
   isMobile: boolean;
   rightSidebarOpen: boolean;
@@ -14,6 +16,7 @@ interface RightSidebarProps {
   nearbyResults: NearbyStudentType[];
   limpiarResultadosCercanos: () => void;
   featureValues: FeatureValues | null;
+  user: User | null;
 }
 
 export function RightSidebar({
@@ -25,7 +28,39 @@ export function RightSidebar({
   nearbyResults,
   limpiarResultadosCercanos,
   featureValues,
+  user,
 }: RightSidebarProps) {
+  
+  // Validaciones para botón eliminar
+  const featureId = featureValues?.id || featureValues?.gid || featureValues?.objectid || "unknown";
+  const featureName = (featureValues?.nombre as string) || "Región Seleccionada";
+  const featureUserId = featureValues?.user_id || featureValues?.userid || featureValues?.usuario_id;
+  const isOwnedByCurrentUser = !!(user && featureUserId && featureUserId === user.id);
+
+  const handleEliminarSidebar = () => {
+    // @ts-expect-error - Global API
+    if (window.mapActions && window.mapActions.handleEliminar) {
+      // @ts-expect-error
+      window.mapActions.handleEliminar(featureId, featureName);
+      setRightSidebarOpen(false); // Cerramos tras eliminar
+    }
+  };
+
+  let displayJSON = "";
+  if (featureValues) {
+    try {
+      const filteredObj: Record<string, unknown> = {};
+      Object.entries(featureValues).forEach(([key, value]) => {
+        if (!excludeKeys.has(key)) {
+          filteredObj[key] = value;
+        }
+      });
+      displayJSON = JSON.stringify(filteredObj, null, 2);
+    } catch (e) {
+      displayJSON = "Error parseando objeto";
+    }
+  }
+
   return (
     <div
       className={`bg-card border-l border-border transition-all duration-300 ease-out z-30 ${
@@ -137,13 +172,19 @@ export function RightSidebar({
                     Objeto seleccionado
                   </h3>
                   <pre className="text-wrap text-xs bg-muted p-3 rounded-lg overflow-x-auto font-mono text-foreground">
-                    {JSON.stringify(
-                      featureValues,
-                      (key, value) =>
-                        excludeKeys.has(key) ? undefined : value,
-                      2
-                    )}
+                    {displayJSON}
                   </pre>
+                  
+                  {isOwnedByCurrentUser && (
+                    <Button 
+                      variant="destructive" 
+                      onClick={handleEliminarSidebar}
+                      className="w-full mt-4 bg-red-500 hover:bg-red-600 shadow-md flex items-center gap-2"
+                    >
+                      <X size={16} />
+                      Eliminar mi ubicación
+                    </Button>
+                  )}
                 </div>
               )}
             </div>

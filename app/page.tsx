@@ -54,6 +54,14 @@ export default function HomePage() {
 
   const [nearbyResults, setNearbyResults] = useState<NearbyStudentType[]>([]);
 
+  // Inicialización de ubicaciones del usuario
+  useEffect(() => {
+    if (user) {
+      useMapStore.getState().setUser(user);
+      useMapStore.getState().updateStudentLocationLayer(user);
+    }
+  }, [user]);
+
   // Detectar si es dispositivo móvil
   useEffect(() => {
     const checkIsMobile = () => {
@@ -212,6 +220,7 @@ export default function HomePage() {
           nearbyResults={nearbyResults}
           limpiarResultadosCercanos={limpiarResultadosCercanos}
           featureValues={featureValues}
+          user={user}
         />
       </div>
 

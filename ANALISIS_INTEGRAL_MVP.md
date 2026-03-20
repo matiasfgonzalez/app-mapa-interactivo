@@ -819,3 +819,348 @@ El proyecto **CEREGEO** tiene una base técnica sólida con un stack moderno y f
 
 **Documento generado para el equipo de desarrollo CEREGEO**  
 _Análisis profesional orientado a producto productivo y escalable_
+
+
+# PROXIMO PROMPT
+Actúa como un Frontend Architect Senior + UI System Designer + Experto en Theming y Accesibilidad especializado en aplicaciones modernas con Next.js + React + Tailwind CSS + Radix UI + next-themes.
+
+Tengo un proyecto donde existe implementación de modo claro y oscuro.
+Necesito un análisis profundo, detallado y exhaustivo de todas las páginas, layouts, componentes y estilos para asegurar que:
+
+El modo claro y oscuro funcionen correctamente.
+
+No existan inconsistencias visuales.
+
+Todos los colores respondan correctamente al modo activo.
+
+No haya textos invisibles o con bajo contraste.
+
+No existan hardcoded colors.
+
+El sistema sea coherente, accesible y profesional.
+
+El resultado final sea un MVP visualmente sólido y sin fallos visuales.
+
+🎯 OBJETIVO
+
+Garantizar que el sistema de theming:
+
+Sea consistente en toda la aplicación.
+
+Sea escalable.
+
+Respete buenas prácticas.
+
+Cumpla criterios mínimos de accesibilidad (WCAG).
+
+No tenga conflictos entre Tailwind, Radix y clases personalizadas.
+
+No tenga parpadeos (FOUC) ni hydration mismatch.
+
+Funcione correctamente con SSR en Next.js.
+
+🔎 ALCANCE DEL ANÁLISIS
+1️⃣ Auditoría Global del Sistema de Theming
+
+Revisar:
+
+Configuración de next-themes
+
+Uso correcto de ThemeProvider
+
+Uso de attribute="class"
+
+Configuración en layout principal
+
+Uso correcto de suppressHydrationWarning
+
+Persistencia del modo en localStorage
+
+Compatibilidad con SSR
+
+Manejo correcto de useTheme()
+
+Detectar:
+
+Flickering al cargar
+
+Mismatch entre servidor y cliente
+
+Renderizado incorrecto inicial
+
+Default theme incorrecto
+
+2️⃣ Auditoría de Configuración Tailwind
+
+Analizar:
+
+darkMode: 'class'
+
+Configuración del tailwind.config
+
+Uso de variables CSS (:root y .dark)
+
+Tokens de diseño
+
+Paleta de colores
+
+Si existen colores hardcodeados (ej: text-black, bg-white, text-gray-900)
+
+Uso correcto de dark: modifier
+
+Uso incorrecto de colores absolutos
+
+Detectar:
+
+Colores que no cambian en modo oscuro
+
+Componentes que quedan ilegibles
+
+Uso inconsistente de escalas
+
+Proponer:
+
+Sistema de tokens semánticos:
+
+bg-background
+
+text-foreground
+
+bg-card
+
+border-border
+
+text-muted-foreground
+
+etc.
+
+3️⃣ Auditoría Página por Página
+
+Analizar cada:
+
+Page
+
+Layout
+
+Componente reutilizable
+
+Modal
+
+Dialog
+
+Popover
+
+Dropdown
+
+Tooltip
+
+Form
+
+Input
+
+Select
+
+Checkbox
+
+Tabla
+
+Sidebar
+
+Navbar
+
+Footer
+
+Componentes de mapa (OpenLayers)
+
+Gráficos (Recharts)
+
+Componentes con D3
+
+Drag & drop (dnd-kit)
+
+Verificar:
+
+Fondo correcto en ambos modos
+
+Texto legible
+
+Bordes visibles
+
+Sombras correctas
+
+Iconos visibles
+
+Estados hover
+
+Estados active
+
+Estados disabled
+
+Estados focus
+
+Placeholders visibles
+
+Labels visibles
+
+Tooltips legibles
+
+Overlays correctamente oscurecidos
+
+Scrollbars consistentes
+
+Toasts visibles
+
+Charts con colores compatibles con dark mode
+
+Capas del mapa compatibles con modo oscuro
+
+4️⃣ Auditoría de Accesibilidad (WCAG)
+
+Verificar:
+
+Contraste mínimo AA
+
+Texto pequeño legible
+
+No usar gris claro sobre fondo oscuro
+
+No usar negro puro sobre fondo oscuro
+
+Botones con contraste correcto
+
+Inputs con borde visible
+
+Focus visible
+
+No depender solo del color para estados
+
+5️⃣ Revisión de Componentes Radix UI
+
+Validar:
+
+Que no estén usando estilos inline
+
+Que no rompan el dark mode
+
+Que usen tokens y no colores absolutos
+
+Que popovers y modals hereden correctamente el modo
+
+6️⃣ Revisión de Componentes Personalizados
+
+Detectar:
+
+Uso de bg-white, text-black, border-gray-200
+
+Uso de style={{ backgroundColor: ... }}
+
+Uso incorrecto de clases dinámicas
+
+Componentes que ignoran el tema
+
+7️⃣ Auditoría de Gráficos y Mapas
+Recharts
+
+Verificar:
+
+Colores de líneas
+
+Ejes visibles
+
+Tooltips legibles
+
+Grid visible en ambos modos
+
+OpenLayers
+
+Verificar:
+
+Fondo del mapa
+
+Controles visibles
+
+Popups visibles
+
+Overlays legibles
+
+Capas compatibles con modo oscuro
+
+8️⃣ Performance y Renderizado
+
+Detectar:
+
+Re-renders innecesarios al cambiar tema
+
+Componentes que no reaccionan al cambio
+
+Uso incorrecto de useEffect con theme
+
+Uso innecesario de estado duplicado
+
+🚨 DETECTAR ESPECÍFICAMENTE
+
+Texto invisible en dark
+
+Botones blancos sobre fondo blanco
+
+Inputs sin borde visible
+
+Placeholders invisibles
+
+Sombras que desaparecen en dark
+
+Bordes que no se ven
+
+Iconos con stroke incorrecto
+
+Componentes que quedan “flotando” sin contraste
+
+Toasts invisibles
+
+Modal backdrop incorrecto
+
+Charts ilegibles
+
+📦 OUTPUT ESPERADO DEL AGENTE
+
+Debe entregar:
+
+Informe estructurado por página y componente
+
+Lista de problemas detectados
+
+Nivel de criticidad (Alta / Media / Baja)
+
+Captura conceptual del problema
+
+Solución concreta
+
+Código corregido de ejemplo
+
+Propuesta de sistema de diseño unificado
+
+Checklist final de validación dark/light
+
+Conclusión final sobre estabilidad visual del sistema
+
+Debe actuar como auditor profesional senior, no superficial.
+
+🎯 RESULTADO FINAL ESPERADO
+
+Al finalizar el análisis y correcciones:
+
+No debe existir ningún hardcoded color.
+
+Todos los componentes deben usar tokens semánticos.
+
+El modo claro y oscuro deben verse profesionales.
+
+No debe haber ningún texto ilegible.
+
+El sistema debe verse consistente.
+
+El cambio de tema debe ser inmediato y sin errores.
+
+No debe haber hydration mismatch.
+
+Debe estar listo para producción.
